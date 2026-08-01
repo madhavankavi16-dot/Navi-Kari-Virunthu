@@ -1,0 +1,1423 @@
+<!DOCTYPE html>
+<html lang="ta" data-theme="dark">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1">
+<title>நவி கறி விருந்து | Navi Kari Virunthu POS</title>
+
+<!--
+  =========================================================================
+  NAVI KARI VIRUNTHU — Restaurant POS
+  Single-file app. HTML + CSS + Vanilla JS only. No frameworks, no CDN,
+  no backend, no database. All data persists in window.localStorage.
+  Works fully offline. Deployable as-is on GitHub Pages.
+  =========================================================================
+-->
+
+<style>
+/* =========================================================================
+   1. THEME TOKENS (dark = default premium red/black/gold, light = variant)
+   ========================================================================= */
+:root{
+  --bg:#0c0706; --bg-alt:#160a08; --bg-glow:#3a0d0d;
+  --glass:rgba(255,255,255,.055); --glass-strong:rgba(255,255,255,.09);
+  --border:rgba(212,175,55,.28); --border-strong:rgba(212,175,55,.55);
+  --gold:#D4AF37; --gold-soft:#F0D888; --gold-deep:#9C7A1E;
+  --red:#8C1418; --red-bright:#C4232B; --red-glow:rgba(196,35,43,.45);
+  --text:#F6EFE3; --text-dim:#C9B9A4; --text-faint:#8f7c68;
+  --success:#3FAE5C; --danger:#E0503F; --info:#4A9FD8;
+  --radius-lg:22px; --radius-md:14px; --radius-sm:9px;
+  --shadow:0 10px 34px rgba(0,0,0,.5);
+  --shadow-sm:0 4px 14px rgba(0,0,0,.35);
+  --sidebar-w:250px;
+  --font-display:'Georgia','Palatino Linotype', 'Book Antiqua', serif;
+  --font-body:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;
+}
+html[data-theme="light"]{
+  --bg:#FBF3E4; --bg-alt:#F4E6C9; --bg-glow:#f1d9a8;
+  --glass:rgba(255,255,255,.55); --glass-strong:rgba(255,255,255,.78);
+  --border:rgba(140,20,24,.2); --border-strong:rgba(140,20,24,.4);
+  --gold:#A9760B; --gold-soft:#8C1418; --gold-deep:#7a5c09;
+  --text:#2B1608; --text-dim:#5c4128; --text-faint:#8a7355;
+  --shadow:0 10px 30px rgba(120,80,20,.18);
+  --shadow-sm:0 4px 12px rgba(120,80,20,.12);
+}
+
+*{box-sizing:border-box; margin:0; padding:0;}
+html,body{height:100%;}
+body{
+  font-family:var(--font-body);
+  color:var(--text);
+  background:
+    radial-gradient(circle at 15% 0%, var(--bg-glow) 0%, transparent 45%),
+    radial-gradient(circle at 100% 30%, rgba(212,175,55,.12) 0%, transparent 40%),
+    linear-gradient(160deg, var(--bg), var(--bg-alt) 60%, var(--bg));
+  background-attachment:fixed;
+  min-height:100vh;
+  transition:background .4s ease, color .3s ease;
+  overflow-x:hidden;
+}
+::selection{ background:var(--gold); color:#1a0f05; }
+::-webkit-scrollbar{ width:8px; height:8px; }
+::-webkit-scrollbar-thumb{ background:var(--border-strong); border-radius:10px; }
+a{ color:inherit; text-decoration:none; }
+button{ font-family:inherit; cursor:pointer; border:none; background:none; color:inherit; }
+input,select,textarea{ font-family:inherit; color:var(--text); }
+
+/* =========================================================================
+   2. GLASSMORPHISM PRIMITIVES
+   ========================================================================= */
+.glass{
+  background:var(--glass);
+  backdrop-filter:blur(18px) saturate(160%);
+  -webkit-backdrop-filter:blur(18px) saturate(160%);
+  border:1px solid var(--border);
+  border-radius:var(--radius-lg);
+  box-shadow:var(--shadow);
+}
+.glass-sm{
+  background:var(--glass); backdrop-filter:blur(14px) saturate(150%);
+  -webkit-backdrop-filter:blur(14px) saturate(150%);
+  border:1px solid var(--border); border-radius:var(--radius-md);
+  box-shadow:var(--shadow-sm);
+}
+.gold-text{ color:var(--gold); }
+.btn{
+  display:inline-flex; align-items:center; justify-content:center; gap:8px;
+  padding:11px 18px; border-radius:var(--radius-md);
+  font-weight:600; font-size:14px; letter-spacing:.2px;
+  transition:transform .15s ease, box-shadow .25s ease, filter .2s ease;
+  border:1px solid transparent;
+}
+.btn:active{ transform:translateY(2px) scale(.98); }
+.btn-gold{
+  background:linear-gradient(135deg,var(--gold-soft),var(--gold) 55%,var(--gold-deep));
+  color:#241205; box-shadow:0 6px 18px rgba(212,175,55,.35);
+}
+.btn-gold:hover{ filter:brightness(1.08); }
+.btn-red{
+  background:linear-gradient(135deg,var(--red-bright),var(--red));
+  color:#fff; box-shadow:0 6px 18px var(--red-glow);
+}
+.btn-red:hover{ filter:brightness(1.1); }
+.btn-ghost{
+  background:var(--glass); border:1px solid var(--border); color:var(--text);
+}
+.btn-ghost:hover{ border-color:var(--border-strong); }
+.btn-success{ background:linear-gradient(135deg,#4fd07a,var(--success)); color:#06210f; }
+.btn-sm{ padding:7px 12px; font-size:12.5px; border-radius:10px; }
+.btn-icon{ width:38px; height:38px; padding:0; border-radius:12px; }
+
+.field{ display:flex; flex-direction:column; gap:6px; margin-bottom:14px; }
+.field label{ font-size:12px; font-weight:700; letter-spacing:.4px; color:var(--text-dim); text-transform:uppercase; }
+.field input, .field select, .field textarea{
+  background:rgba(0,0,0,.18); border:1px solid var(--border); border-radius:12px;
+  padding:11px 13px; font-size:14.5px; outline:none; transition:border-color .2s, box-shadow .2s;
+}
+html[data-theme="light"] .field input, html[data-theme="light"] .field select, html[data-theme="light"] .field textarea{
+  background:rgba(255,255,255,.5);
+}
+.field input:focus, .field select:focus, .field textarea:focus{
+  border-color:var(--gold); box-shadow:0 0 0 3px rgba(212,175,55,.18);
+}
+.field textarea{ resize:vertical; min-height:64px; }
+.row-2{ display:grid; grid-template-columns:1fr 1fr; gap:12px; }
+.chip{
+  display:inline-flex; align-items:center; gap:5px; padding:6px 13px; border-radius:99px;
+  font-size:12.5px; font-weight:700; border:1px solid var(--border); background:var(--glass);
+  cursor:pointer; transition:.2s; white-space:nowrap;
+}
+.chip.active{ background:linear-gradient(135deg,var(--gold-soft),var(--gold)); color:#241205; border-color:transparent; }
+.badge{ font-size:11px; font-weight:800; padding:3px 9px; border-radius:99px; letter-spacing:.3px; }
+.badge.on{ background:rgba(63,174,92,.18); color:#5fe089; }
+.badge.off{ background:rgba(224,80,63,.18); color:#ff8a76; }
+
+/* fade / pop animations */
+@keyframes fadeUp{ from{opacity:0; transform:translateY(14px);} to{opacity:1; transform:translateY(0);} }
+@keyframes popIn{ from{opacity:0; transform:scale(.9);} to{opacity:1; transform:scale(1);} }
+@keyframes floaty{ 0%,100%{transform:translateY(0);} 50%{transform:translateY(-6px);} }
+@keyframes shimmer{ 0%{background-position:-200% 0;} 100%{background-position:200% 0;} }
+@keyframes spin{ to{ transform:rotate(360deg); } }
+.fade-up{ animation:fadeUp .35s ease both; }
+.pop-in{ animation:popIn .2s ease both; }
+
+/* =========================================================================
+   3. APP SHELL — SIDEBAR + TOPBAR + MAIN
+   ========================================================================= */
+.app-shell{ display:flex; min-height:100vh; }
+
+.sidebar{
+  width:var(--sidebar-w); flex-shrink:0; position:fixed; top:0; left:0; bottom:0;
+  display:flex; flex-direction:column; padding:22px 16px; gap:18px; z-index:60;
+  border-radius:0; border-right:1px solid var(--border);
+  transition:transform .3s ease;
+}
+.brand{ display:flex; align-items:center; gap:10px; padding:6px 6px 14px 6px; }
+.brand-name{ font-family:var(--font-display); line-height:1.05; }
+.brand-name .ta{ font-size:17px; font-weight:700; color:var(--gold-soft); display:block; }
+.brand-name .en{ font-size:10.5px; letter-spacing:1px; color:var(--text-faint); text-transform:uppercase; }
+
+.nav-list{ display:flex; flex-direction:column; gap:4px; flex:1; overflow-y:auto; }
+.nav-item{
+  display:flex; align-items:center; gap:12px; padding:11px 13px; border-radius:12px;
+  font-size:14px; font-weight:600; color:var(--text-dim); transition:.2s; position:relative;
+}
+.nav-item svg{ width:19px; height:19px; flex-shrink:0; }
+.nav-item:hover{ background:var(--glass-strong); color:var(--text); }
+.nav-item.active{
+  background:linear-gradient(90deg, rgba(212,175,55,.22), rgba(212,175,55,.04));
+  color:var(--gold-soft); box-shadow:inset 3px 0 0 var(--gold);
+}
+.sidebar-foot{ display:flex; flex-direction:column; gap:10px; }
+.theme-toggle{
+  display:flex; align-items:center; justify-content:space-between; padding:9px 12px;
+  border-radius:12px; background:var(--glass-strong); border:1px solid var(--border); font-size:13px; font-weight:600;
+}
+.theme-toggle svg{ width:17px; height:17px; }
+
+.topbar{
+  display:none; align-items:center; justify-content:space-between; padding:14px 16px;
+  position:sticky; top:0; z-index:50; border-radius:0; border-bottom:1px solid var(--border);
+}
+.hamburger{ width:40px; height:40px; border-radius:12px; display:flex; align-items:center; justify-content:center; }
+.hamburger svg{ width:22px; height:22px; }
+
+.main{ flex:1; margin-left:var(--sidebar-w); padding:26px 28px 90px; min-width:0; }
+.section{ display:none; }
+.section.active{ display:block; animation:fadeUp .3s ease both; }
+
+.page-head{ display:flex; align-items:center; justify-content:space-between; gap:14px; margin-bottom:22px; flex-wrap:wrap; }
+.page-title{ font-family:var(--font-display); font-size:26px; font-weight:700; }
+.page-sub{ font-size:13px; color:var(--text-faint); margin-top:2px; }
+
+.overlay-backdrop{
+  display:none; position:fixed; inset:0; background:rgba(0,0,0,.55); z-index:55; backdrop-filter:blur(2px);
+}
+.overlay-backdrop.show{ display:block; }
+
+/* =========================================================================
+   4. DASHBOARD
+   ========================================================================= */
+.stat-grid{ display:grid; grid-template-columns:repeat(4,1fr); gap:16px; margin-bottom:24px; }
+.stat-card{ padding:20px; display:flex; flex-direction:column; gap:8px; position:relative; overflow:hidden; }
+.stat-card::after{
+  content:''; position:absolute; width:120px; height:120px; border-radius:50%;
+  background:radial-gradient(circle, rgba(212,175,55,.25), transparent 70%);
+  top:-40px; right:-40px;
+}
+.stat-icon{ width:38px; height:38px; border-radius:11px; display:flex; align-items:center; justify-content:center;
+  background:linear-gradient(135deg,var(--gold-soft),var(--gold-deep)); color:#241205; }
+.stat-icon svg{ width:19px; height:19px; }
+.stat-value{ font-family:var(--font-display); font-size:26px; font-weight:700; }
+.stat-label{ font-size:12px; color:var(--text-faint); font-weight:600; text-transform:uppercase; letter-spacing:.4px; }
+
+.dash-grid{ display:grid; grid-template-columns:1.3fr 1fr; gap:18px; }
+.panel{ padding:20px; }
+.panel h3{ font-family:var(--font-display); font-size:17px; margin-bottom:14px; }
+.bar-row{ display:flex; align-items:center; gap:10px; margin-bottom:12px; }
+.bar-label{ width:130px; font-size:12.5px; font-weight:600; color:var(--text-dim); flex-shrink:0; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.bar-track{ flex:1; height:10px; border-radius:99px; background:rgba(0,0,0,.2); overflow:hidden; }
+.bar-fill{ height:100%; border-radius:99px; background:linear-gradient(90deg,var(--red),var(--gold)); transition:width .6s ease; }
+.bar-val{ font-size:12px; font-weight:700; color:var(--gold-soft); width:34px; text-align:right; }
+
+/* =========================================================================
+   5. MENU GRID (management + POS)
+   ========================================================================= */
+.toolbar{ display:flex; gap:10px; flex-wrap:wrap; align-items:center; margin-bottom:18px; }
+.search-box{ position:relative; flex:1; min-width:180px; }
+.search-box svg{ position:absolute; left:13px; top:50%; transform:translateY(-50%); width:16px; height:16px; color:var(--text-faint); }
+.search-box input{ width:100%; padding-left:38px; }
+.chip-row{ display:flex; gap:8px; flex-wrap:wrap; }
+
+.menu-grid{ display:grid; grid-template-columns:repeat(auto-fill,minmax(190px,1fr)); gap:16px; }
+.food-card{ overflow:hidden; display:flex; flex-direction:column; transition:transform .2s ease; }
+.food-card:hover{ transform:translateY(-4px); }
+.food-thumb{
+  height:110px; display:flex; align-items:center; justify-content:center; font-size:42px;
+  background:linear-gradient(135deg, rgba(196,35,43,.35), rgba(212,175,55,.25));
+  position:relative;
+}
+.food-thumb img{ width:100%; height:100%; object-fit:cover; }
+.food-body{ padding:13px; display:flex; flex-direction:column; gap:6px; flex:1; }
+.food-name{ font-weight:700; font-size:14.5px; }
+.food-cat{ font-size:11px; color:var(--text-faint); font-weight:600; text-transform:uppercase; letter-spacing:.4px; }
+.food-desc{ font-size:12px; color:var(--text-dim); line-height:1.4; min-height:32px; }
+.food-foot{ display:flex; align-items:center; justify-content:space-between; margin-top:4px; }
+.food-price{ font-family:var(--font-display); font-weight:700; color:var(--gold-soft); font-size:16.5px; }
+.food-actions{ display:flex; gap:6px; margin-top:8px; }
+.qty-pill{ display:flex; align-items:center; gap:10px; background:rgba(0,0,0,.22); border-radius:99px; padding:5px 8px; }
+.qty-pill button{ width:26px; height:26px; border-radius:50%; background:var(--gold); color:#241205; font-weight:800; display:flex; align-items:center; justify-content:center; }
+.qty-pill span{ min-width:16px; text-align:center; font-weight:700; }
+
+/* =========================================================================
+   6. POS LAYOUT (menu + cart)
+   ========================================================================= */
+.pos-layout{ display:grid; grid-template-columns:1fr 380px; gap:18px; align-items:start; }
+.cart-panel{ position:sticky; top:20px; padding:18px; display:flex; flex-direction:column; gap:12px; max-height:calc(100vh - 40px); }
+.cart-items{ display:flex; flex-direction:column; gap:10px; overflow-y:auto; max-height:260px; padding-right:4px; }
+.cart-row{ display:flex; align-items:center; gap:10px; }
+.cart-row .info{ flex:1; min-width:0; }
+.cart-row .name{ font-size:13px; font-weight:700; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.cart-row .price{ font-size:11.5px; color:var(--text-faint); }
+.empty-cart{ text-align:center; padding:26px 10px; color:var(--text-faint); font-size:13px; }
+.summary-row{ display:flex; justify-content:space-between; font-size:13.5px; padding:3px 0; color:var(--text-dim); }
+.summary-row.total{ font-size:19px; font-weight:800; color:var(--gold-soft); font-family:var(--font-display); border-top:1px dashed var(--border); margin-top:6px; padding-top:10px; }
+.pay-modes{ display:grid; grid-template-columns:repeat(3,1fr); gap:8px; }
+.pay-mode{ padding:10px 6px; border-radius:12px; text-align:center; font-size:12px; font-weight:700; border:1px solid var(--border); background:var(--glass); display:flex; flex-direction:column; align-items:center; gap:4px; }
+.pay-mode svg{ width:18px; height:18px; }
+.pay-mode.active{ border-color:var(--gold); background:linear-gradient(135deg, rgba(212,175,55,.25), rgba(212,175,55,.05)); color:var(--gold-soft); }
+
+/* =========================================================================
+   7. TABLES (orders / customers)
+   ========================================================================= */
+.data-table{ width:100%; border-collapse:collapse; font-size:13.5px; }
+.data-table th{ text-align:left; padding:11px 12px; font-size:11px; text-transform:uppercase; letter-spacing:.5px; color:var(--text-faint); border-bottom:1px solid var(--border); }
+.data-table td{ padding:12px; border-bottom:1px solid rgba(255,255,255,.05); vertical-align:middle; }
+.data-table tr:hover td{ background:var(--glass-strong); }
+.table-wrap{ overflow-x:auto; border-radius:var(--radius-lg); }
+
+/* =========================================================================
+   8. MODALS
+   ========================================================================= */
+.modal{
+  display:none; position:fixed; inset:0; z-index:70; align-items:center; justify-content:center; padding:16px;
+}
+.modal.show{ display:flex; }
+.modal-card{ width:100%; max-width:480px; max-height:90vh; overflow-y:auto; padding:24px; }
+.modal-card.wide{ max-width:640px; }
+.modal-head{ display:flex; align-items:center; justify-content:space-between; margin-bottom:16px; }
+.modal-head h2{ font-family:var(--font-display); font-size:20px; }
+.close-x{ width:32px; height:32px; border-radius:10px; display:flex; align-items:center; justify-content:center; background:var(--glass-strong); }
+.close-x svg{ width:16px; height:16px; }
+
+/* bill receipt */
+.receipt{ background:#fdf8ec; color:#241205; border-radius:14px; padding:20px; font-family:'Courier New',monospace; }
+.receipt .r-head{ text-align:center; margin-bottom:10px; }
+.receipt .r-head .name{ font-size:17px; font-weight:800; letter-spacing:.5px; }
+.receipt .r-head small{ display:block; font-size:11px; margin-top:2px; }
+.receipt hr{ border:none; border-top:1px dashed #a08757; margin:9px 0; }
+.receipt table{ width:100%; font-size:12.5px; border-collapse:collapse; }
+.receipt table td{ padding:3px 0; }
+.receipt .r-total{ font-size:15px; font-weight:800; }
+.receipt .r-foot{ text-align:center; font-size:11px; margin-top:10px; }
+
+/* =========================================================================
+   9. LOGO (comic-style original hero mascot — pure SVG, no external assets)
+   ========================================================================= */
+.logo-wrap{ position:relative; width:46px; height:46px; flex-shrink:0; }
+.logo-wrap svg{ width:100%; height:100%; animation:floaty 3.4s ease-in-out infinite; }
+.hero-logo-lg{ width:150px; height:150px; margin:0 auto; }
+.hero-logo-lg svg{ width:100%; height:100%; }
+
+/* =========================================================================
+   10. TOAST
+   ========================================================================= */
+.toast{
+  position:fixed; bottom:26px; left:50%; transform:translateX(-50%); z-index:90;
+  padding:13px 22px; border-radius:14px; font-weight:700; font-size:13.5px;
+  display:none; align-items:center; gap:8px; box-shadow:0 10px 26px rgba(0,0,0,.5);
+}
+.toast.show{ display:flex; animation:popIn .2s ease; }
+
+/* =========================================================================
+   11. RESPONSIVE
+   ========================================================================= */
+@media (max-width:1080px){
+  .pos-layout{ grid-template-columns:1fr; }
+  .cart-panel{ position:static; max-height:none; }
+  .dash-grid{ grid-template-columns:1fr; }
+  .stat-grid{ grid-template-columns:repeat(2,1fr); }
+}
+@media (max-width:860px){
+  .sidebar{ transform:translateX(-100%); }
+  .sidebar.open{ transform:translateX(0); }
+  .topbar{ display:flex; }
+  .main{ margin-left:0; padding:18px 14px 90px; }
+  .row-2{ grid-template-columns:1fr; }
+  .modal-card{ padding:18px; }
+}
+@media (max-width:480px){
+  .stat-grid{ grid-template-columns:1fr 1fr; }
+  .page-title{ font-size:21px; }
+}
+
+/* =========================================================================
+   12. PRINT — only the receipt is visible when printing
+   ========================================================================= */
+@media print{
+  body *{ visibility:hidden; }
+  #printArea, #printArea *{ visibility:visible; }
+  #printArea{ position:absolute; top:0; left:0; width:100%; }
+  .receipt{ box-shadow:none; border-radius:0; }
+}
+</style>
+</head>
+<body>
+
+<!-- ============================= SIDEBAR (desktop) / DRAWER (mobile) ============================= -->
+<div class="overlay-backdrop" id="overlayBackdrop"></div>
+
+<aside class="sidebar glass" id="sidebar">
+  <div class="brand">
+    <div class="logo-wrap" id="logoSlotSmall"></div>
+    <div class="brand-name">
+      <span class="ta">நவி கறி விருந்து</span>
+      <span class="en">Navi Kari Virunthu</span>
+    </div>
+  </div>
+
+  <nav class="nav-list" id="navList">
+    <button class="nav-item active" data-section="dashboard">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="9" rx="1.5"/><rect x="14" y="3" width="7" height="5" rx="1.5"/><rect x="14" y="12" width="7" height="9" rx="1.5"/><rect x="3" y="16" width="7" height="5" rx="1.5"/></svg>
+      Dashboard
+    </button>
+    <button class="nav-item" data-section="pos">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="9" cy="20" r="1.4"/><circle cx="18" cy="20" r="1.4"/><path d="M2 3h2l2.6 12.6a2 2 0 0 0 2 1.6h8.9a2 2 0 0 0 2-1.6L21 7H6"/></svg>
+      Billing / POS
+    </button>
+    <button class="nav-item" data-section="menu">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 3v18M4 3c3 0 3 2.5 3 4.5S7 12 4 12M15 3l4 4-4 4M20 13l-4 8"/></svg>
+      Menu Management
+    </button>
+    <button class="nav-item" data-section="customers">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="9" cy="8" r="4"/><path d="M2 21c0-4 3-7 7-7s7 3 7 7"/><circle cx="17" cy="7" r="3"/><path d="M23 20c0-3-2-5.5-5-6"/></svg>
+      Customers
+    </button>
+    <button class="nav-item" data-section="orders">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 4h6l1 3H8l1-3Z"/><path d="M5 7h14l-1.2 12.2a2 2 0 0 1-2 1.8H8.2a2 2 0 0 1-2-1.8L5 7Z"/><path d="M9 11v6M15 11v6"/></svg>
+      Order History
+    </button>
+    <button class="nav-item" data-section="reports">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 19V9M11 19V4M18 19v-7"/></svg>
+      Reports
+    </button>
+    <button class="nav-item" data-section="settings">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3.2"/><path d="M19.4 13a1.7 1.7 0 0 0 .34 1.9l.06.06a2 2 0 1 1-2.9 2.9l-.06-.06a1.7 1.7 0 0 0-1.9-.34 1.7 1.7 0 0 0-1 1.55V19.5a2 2 0 1 1-4 0v-.09A1.7 1.7 0 0 0 8.9 17.9a1.7 1.7 0 0 0-1.9.34l-.06.06a2 2 0 1 1-2.9-2.9l.06-.06a1.7 1.7 0 0 0 .34-1.9 1.7 1.7 0 0 0-1.55-1H2.5a2 2 0 1 1 0-4h.09A1.7 1.7 0 0 0 4.1 6.9a1.7 1.7 0 0 0-.34-1.9l-.06-.06a2 2 0 1 1 2.9-2.9l.06.06a1.7 1.7 0 0 0 1.9.34H8.6A1.7 1.7 0 0 0 9.6 1V.9a2 2 0 1 1 4 0v.09a1.7 1.7 0 0 0 1 1.55 1.7 1.7 0 0 0 1.9-.34l.06-.06a2 2 0 1 1 2.9 2.9l-.06.06a1.7 1.7 0 0 0-.34 1.9v.09a1.7 1.7 0 0 0 1.55 1H21.5a2 2 0 1 1 0 4h-.09a1.7 1.7 0 0 0-1.55 1Z"/></svg>
+      Admin Settings
+    </button>
+  </nav>
+
+  <div class="sidebar-foot">
+    <button class="theme-toggle" id="themeToggle">
+      <span id="themeLabel">🌙 Dark Mode</span>
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path id="themeIcon" d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8Z"/></svg>
+    </button>
+  </div>
+</aside>
+
+<!-- ============================= TOPBAR (mobile) ============================= -->
+<div class="topbar glass" id="topbar">
+  <button class="hamburger btn-ghost" id="hamburgerBtn">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 6h18M3 12h18M3 18h18"/></svg>
+  </button>
+  <div class="brand"><div class="logo-wrap" id="logoSlotTop"></div>
+    <div class="brand-name"><span class="ta" style="font-size:15px">நவி கறி விருந்து</span></div>
+  </div>
+  <button class="hamburger btn-ghost" id="topbarCartBtn" title="Go to Billing">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="9" cy="20" r="1.4"/><circle cx="18" cy="20" r="1.4"/><path d="M2 3h2l2.6 12.6a2 2 0 0 0 2 1.6h8.9a2 2 0 0 0 2-1.6L21 7H6"/></svg>
+  </button>
+</div>
+
+<!-- ============================= MAIN APP ============================= -->
+<div class="main" id="mainArea">
+
+  <!-- ---------------- DASHBOARD ---------------- -->
+  <section class="section active" id="section-dashboard">
+    <div class="page-head">
+      <div>
+        <div class="hero-logo-lg" id="logoSlotDash" style="width:76px;height:76px;display:inline-block;vertical-align:middle;margin-right:10px"></div>
+        <span class="page-title" id="dashRestName">நவி கறி விருந்து</span>
+        <div class="page-sub">Welcome back — here's how business is doing today.</div>
+      </div>
+    </div>
+
+    <div class="stat-grid">
+      <div class="glass stat-card fade-up">
+        <div class="stat-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 1v22M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg></div>
+        <div class="stat-value" id="statTodaySales">₹0</div>
+        <div class="stat-label">Today's Sales</div>
+      </div>
+      <div class="glass stat-card fade-up" style="animation-delay:.05s">
+        <div class="stat-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 4h6l1 3H8l1-3Z"/><path d="M5 7h14l-1.2 12.2a2 2 0 0 1-2 1.8H8.2a2 2 0 0 1-2-1.8L5 7Z"/></svg></div>
+        <div class="stat-value" id="statTodayOrders">0</div>
+        <div class="stat-label">Today's Orders</div>
+      </div>
+      <div class="glass stat-card fade-up" style="animation-delay:.1s">
+        <div class="stat-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 19V9M11 19V4M18 19v-7"/></svg></div>
+        <div class="stat-value" id="statWeekSales">₹0</div>
+        <div class="stat-label">This Week</div>
+      </div>
+      <div class="glass stat-card fade-up" style="animation-delay:.15s">
+        <div class="stat-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg></div>
+        <div class="stat-value" id="statMonthSales">₹0</div>
+        <div class="stat-label">This Month</div>
+      </div>
+    </div>
+
+    <div class="dash-grid">
+      <div class="glass panel">
+        <h3>🔥 Top Selling Items</h3>
+        <div id="dashTopItems"></div>
+      </div>
+      <div class="glass panel">
+        <h3>🧾 Recent Orders</h3>
+        <div id="dashRecentOrders" style="display:flex;flex-direction:column;gap:10px;"></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ---------------- POS / BILLING ---------------- -->
+  <section class="section" id="section-pos">
+    <div class="page-head">
+      <div><div class="page-title">Billing / POS</div><div class="page-sub">Tap dishes to add them to the current bill</div></div>
+    </div>
+
+    <div class="pos-layout">
+      <div>
+        <div class="toolbar">
+          <div class="search-box">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3"/></svg>
+            <input type="text" id="posSearch" class="glass-sm" placeholder="Search menu... / மெனுவைத் தேடு">
+          </div>
+          <div class="chip-row" id="posCatChips"></div>
+        </div>
+        <div class="menu-grid" id="posMenuGrid"></div>
+      </div>
+
+      <div class="glass cart-panel">
+        <h3 style="font-family:var(--font-display);font-size:18px;">🛒 Current Bill</h3>
+        <div class="cart-items" id="cartItemsWrap"></div>
+
+        <div class="field" style="margin-top:2px">
+          <label>Customer Name (optional)</label>
+          <input type="text" id="custName" class="glass-sm" placeholder="Walk-in customer">
+        </div>
+        <div class="field">
+          <label>Phone (optional)</label>
+          <input type="tel" id="custPhone" class="glass-sm" placeholder="98765 43210">
+        </div>
+
+        <div class="row-2">
+          <div class="field">
+            <label>Discount</label>
+            <input type="number" id="discountInput" class="glass-sm" placeholder="0" min="0" value="0">
+          </div>
+          <div class="field">
+            <label>Discount Type</label>
+            <select id="discountType" class="glass-sm">
+              <option value="flat">₹ Flat</option>
+              <option value="percent">% Percent</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="pay-modes" id="payModes">
+          <button class="pay-mode active" data-mode="Cash">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="6" width="20" height="12" rx="2"/><circle cx="12" cy="12" r="3"/></svg>
+            Cash
+          </button>
+          <button class="pay-mode" data-mode="UPI">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M13 2 3 14h8l-1 8 11-14h-8l0-6Z"/></svg>
+            UPI
+          </button>
+          <button class="pay-mode" data-mode="Card">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="5" width="20" height="14" rx="2"/><path d="M2 10h20"/></svg>
+            Card
+          </button>
+        </div>
+
+        <div style="margin-top:6px;">
+          <div class="summary-row"><span>Subtotal</span><span id="sumSubtotal">₹0</span></div>
+          <div class="summary-row"><span>Discount</span><span id="sumDiscount">-₹0</span></div>
+          <div class="summary-row"><span id="sumGstLabel">GST (5%)</span><span id="sumGst">₹0</span></div>
+          <div class="summary-row total"><span>Total</span><span id="sumTotal">₹0</span></div>
+        </div>
+
+        <div style="display:flex; gap:8px; margin-top:6px;">
+          <button class="btn btn-ghost" style="flex:1" id="btnClearCartPos">Clear</button>
+          <button class="btn btn-gold" style="flex:2" id="btnGenerateBill">Generate Bill →</button>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ---------------- MENU MANAGEMENT ---------------- -->
+  <section class="section" id="section-menu">
+    <div class="page-head">
+      <div><div class="page-title">Menu Management</div><div class="page-sub">Add, edit or remove dishes from your menu</div></div>
+      <button class="btn btn-gold" id="btnAddMenuItem">
+        <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 5v14M5 12h14"/></svg>
+        Add Dish
+      </button>
+    </div>
+    <div class="toolbar">
+      <div class="search-box">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3"/></svg>
+        <input type="text" id="menuSearch" class="glass-sm" placeholder="Search dishes...">
+      </div>
+      <div class="chip-row" id="menuCatChips"></div>
+    </div>
+    <div class="menu-grid" id="menuMgmtGrid"></div>
+  </section>
+
+  <!-- ---------------- CUSTOMERS ---------------- -->
+  <section class="section" id="section-customers">
+    <div class="page-head">
+      <div><div class="page-title">Customers</div><div class="page-sub">Everyone who has placed an order (auto-saved) or added manually</div></div>
+      <button class="btn btn-gold" id="btnAddCustomer">
+        <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 5v14M5 12h14"/></svg>
+        Add Customer
+      </button>
+    </div>
+    <div class="toolbar">
+      <div class="search-box">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3"/></svg>
+        <input type="text" id="custSearch" class="glass-sm" placeholder="Search by name or phone...">
+      </div>
+    </div>
+    <div class="glass table-wrap">
+      <table class="data-table">
+        <thead><tr><th>Name</th><th>Phone</th><th>Orders</th><th>Total Spent</th></tr></thead>
+        <tbody id="customerTableBody"></tbody>
+      </table>
+    </div>
+  </section>
+
+  <!-- ---------------- ORDER HISTORY ---------------- -->
+  <section class="section" id="section-orders">
+    <div class="page-head">
+      <div><div class="page-title">Order History</div><div class="page-sub">All completed bills, most recent first</div></div>
+    </div>
+    <div class="toolbar">
+      <div class="search-box">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3"/></svg>
+        <input type="text" id="orderSearch" class="glass-sm" placeholder="Search by bill no. or customer...">
+      </div>
+    </div>
+    <div class="glass table-wrap">
+      <table class="data-table">
+        <thead><tr><th>Bill #</th><th>Date</th><th>Customer</th><th>Items</th><th>Payment</th><th>Total</th><th></th></tr></thead>
+        <tbody id="orderTableBody"></tbody>
+      </table>
+    </div>
+  </section>
+
+  <!-- ---------------- REPORTS ---------------- -->
+  <section class="section" id="section-reports">
+    <div class="page-head">
+      <div><div class="page-title">Reports</div><div class="page-sub">Sales performance at a glance</div></div>
+    </div>
+    <div class="stat-grid">
+      <div class="glass stat-card"><div class="stat-value" id="repDaily">₹0</div><div class="stat-label">Daily Sales</div></div>
+      <div class="glass stat-card"><div class="stat-value" id="repWeekly">₹0</div><div class="stat-label">Weekly Sales</div></div>
+      <div class="glass stat-card"><div class="stat-value" id="repMonthly">₹0</div><div class="stat-label">Monthly Sales</div></div>
+      <div class="glass stat-card"><div class="stat-value" id="repOrders">0</div><div class="stat-label">Total Orders</div></div>
+    </div>
+    <div class="dash-grid">
+      <div class="glass panel">
+        <h3>💰 Revenue Breakdown</h3>
+        <div id="repRevenueBars"></div>
+      </div>
+      <div class="glass panel">
+        <h3>🏆 Top Selling Food</h3>
+        <div id="repTopFood"></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ---------------- ADMIN SETTINGS ---------------- -->
+  <section class="section" id="section-settings">
+    <div class="page-head">
+      <div><div class="page-title">Admin Settings</div><div class="page-sub">These details appear on your printed bills</div></div>
+    </div>
+    <div class="glass panel" style="max-width:640px;">
+      <div class="row-2">
+        <div class="field"><label>Restaurant Name</label><input type="text" id="setName"></div>
+        <div class="field"><label>Currency Symbol</label><input type="text" id="setCurrency" maxlength="3"></div>
+      </div>
+      <div class="row-2">
+        <div class="field"><label>Phone Number</label><input type="tel" id="setPhone"></div>
+        <div class="field"><label>WhatsApp Number</label><input type="tel" id="setWhatsapp"></div>
+      </div>
+      <div class="field"><label>Address</label><textarea id="setAddress"></textarea></div>
+      <div class="row-2">
+        <div class="field"><label>GST Number</label><input type="text" id="setGstNo"></div>
+        <div class="field"><label>Tax Percentage (%)</label><input type="number" id="setTaxPercent" min="0" max="28"></div>
+      </div>
+      <div class="row-2">
+        <div class="field"><label>Opening Time</label><input type="time" id="setOpenTime"></div>
+        <div class="field"><label>Closing Time</label><input type="time" id="setCloseTime"></div>
+      </div>
+      <div class="field">
+        <label>Restaurant Logo</label>
+        <div style="display:flex; align-items:center; gap:12px;">
+          <div class="logo-wrap" style="width:64px;height:64px;" id="logoSlotSettings"></div>
+          <span style="font-size:12px;color:var(--text-faint);max-width:320px;">
+            Using the original comic-hero mascot generated with pure SVG. No file upload needed — it scales perfectly on any screen.
+          </span>
+        </div>
+      </div>
+      <button class="btn btn-gold" id="btnSaveSettings" style="margin-top:6px;">💾 Save Settings</button>
+    </div>
+  </section>
+
+</div><!-- /main -->
+
+<!-- ============================= MODAL: Add/Edit Menu Item ============================= -->
+<div class="modal" id="menuModal">
+  <div class="glass modal-card">
+    <div class="modal-head">
+      <h2 id="menuModalTitle">Add Dish</h2>
+      <button class="close-x" data-close="menuModal"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M18 6 6 18M6 6l12 12"/></svg></button>
+    </div>
+    <div class="field"><label>Dish Name (English)</label><input type="text" id="mItemNameEn" placeholder="Chicken Biryani"></div>
+    <div class="field"><label>Dish Name (Tamil)</label><input type="text" id="mItemNameTa" placeholder="சிக்கன் பிரியாணி"></div>
+    <div class="row-2">
+      <div class="field"><label>Category</label>
+        <select id="mItemCategory">
+          <option>Biryani</option><option>Chicken</option><option>Mutton</option>
+          <option>Seafood</option><option>Meals</option><option>Sides</option><option>Other</option>
+        </select>
+      </div>
+      <div class="field"><label>Price (₹)</label><input type="number" id="mItemPrice" min="0" placeholder="220"></div>
+    </div>
+    <div class="field"><label>Description</label><textarea id="mItemDesc" placeholder="Short tasty description..."></textarea></div>
+    <div class="field">
+      <label>Image (optional)</label>
+      <div style="display:flex; align-items:center; gap:10px;">
+        <div class="food-thumb glass-sm" style="width:60px;height:60px;flex-shrink:0;font-size:24px;" id="mItemImgPreviewWrap">🍽️</div>
+        <label class="btn btn-ghost btn-sm" style="cursor:pointer;">
+          Upload Photo
+          <input type="file" id="mItemImgInput" accept="image/*" style="display:none">
+        </label>
+      </div>
+    </div>
+    <div class="field" style="flex-direction:row; align-items:center; gap:10px;">
+      <input type="checkbox" id="mItemAvailable" checked style="width:18px;height:18px;">
+      <label style="margin:0;">Available for order</label>
+    </div>
+    <button class="btn btn-gold" style="width:100%;" id="btnSaveMenuItem">💾 Save Dish</button>
+  </div>
+</div>
+
+<!-- ============================= MODAL: Add Customer ============================= -->
+<div class="modal" id="customerModal">
+  <div class="glass modal-card">
+    <div class="modal-head"><h2>Add Customer</h2><button class="close-x" data-close="customerModal"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M18 6 6 18M6 6l12 12"/></svg></button></div>
+    <div class="field"><label>Name</label><input type="text" id="cNewName" placeholder="Customer name"></div>
+    <div class="field"><label>Phone</label><input type="tel" id="cNewPhone" placeholder="98765 43210"></div>
+    <button class="btn btn-gold" style="width:100%;" id="btnSaveCustomer">💾 Save Customer</button>
+  </div>
+</div>
+
+<!-- ============================= MODAL: Bill Preview / Print ============================= -->
+<div class="modal" id="billModal">
+  <div class="glass modal-card wide">
+    <div class="modal-head"><h2>Bill Preview</h2><button class="close-x" data-close="billModal"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M18 6 6 18M6 6l12 12"/></svg></button></div>
+    <div id="printArea">
+      <div class="receipt" id="receiptContent"></div>
+    </div>
+    <div style="display:flex; gap:8px; margin-top:16px;">
+      <button class="btn btn-ghost" style="flex:1" id="btnPrintBill">🖨️ Print Bill</button>
+      <button class="btn btn-ghost" style="flex:1" id="btnDownloadPdf">⬇️ Download PDF</button>
+      <button class="btn btn-success" style="flex:1" id="btnCompleteOrder">✅ Complete Order</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<!-- =========================================================================
+     JAVASCRIPT — all app logic. Organised into clearly commented modules.
+     ========================================================================= -->
+<script>
+(function(){
+"use strict";
+
+/* =========================================================================
+   MODULE: ORIGINAL SVG LOGO
+   A green, muscular, comic-book-energy hero happily eating a chicken leg.
+   Purely original shapes/colors — NOT a copy of any copyrighted character
+   (no purple shorts, no specific facial design, red cape ties it to the
+   restaurant's own red/gold branding instead).
+   ========================================================================= */
+const HERO_LOGO_SVG = `
+<svg viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <radialGradient id="burst" cx="50%" cy="45%" r="60%">
+      <stop offset="0%" stop-color="#F4E5B2"/>
+      <stop offset="100%" stop-color="#D4AF37"/>
+    </radialGradient>
+    <linearGradient id="skin" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#8CD96B"/>
+      <stop offset="100%" stop-color="#4C9A3A"/>
+    </linearGradient>
+  </defs>
+  <!-- comic starburst background -->
+  <g fill="url(#burst)">
+    <path d="M100 4 l10 30 26-20 -8 32 32-6 -22 24 30 12 -32 6 16 28 -30-10 2 32 -22-24-22 24 2-32 -30 10 16-28 -32-6 30-12-22-24 32 6-8-32 26 20Z"/>
+  </g>
+  <!-- halftone dots for comic texture -->
+  <g fill="#8C1418" opacity=".18">
+    <circle cx="30" cy="40" r="3"/><circle cx="45" cy="30" r="2"/><circle cx="170" cy="45" r="3"/>
+    <circle cx="160" cy="30" r="2"/><circle cx="20" cy="150" r="2.4"/><circle cx="180" cy="150" r="2.4"/>
+  </g>
+  <!-- cape -->
+  <path d="M60 90 Q40 140 55 175 Q75 155 100 160 Q125 155 145 175 Q160 140 140 90Z" fill="#8C1418" stroke="#5c0d10" stroke-width="2"/>
+  <!-- body -->
+  <ellipse cx="100" cy="120" rx="38" ry="42" fill="url(#skin)" stroke="#245c1a" stroke-width="3"/>
+  <!-- chest muscle lines -->
+  <path d="M78 100 Q100 112 122 100" stroke="#245c1a" stroke-width="2.5" fill="none" opacity=".6"/>
+  <path d="M100 100 v34" stroke="#245c1a" stroke-width="2.5" opacity=".6"/>
+  <!-- arms (flexed, muscular) -->
+  <ellipse cx="55" cy="108" rx="16" ry="22" fill="url(#skin)" stroke="#245c1a" stroke-width="3" transform="rotate(-18 55 108)"/>
+  <ellipse cx="145" cy="108" rx="16" ry="22" fill="url(#skin)" stroke="#245c1a" stroke-width="3" transform="rotate(18 145 108)"/>
+  <!-- gold wristbands -->
+  <rect x="36" y="118" width="20" height="8" rx="4" fill="#D4AF37" transform="rotate(-18 46 122)"/>
+  <rect x="144" y="118" width="20" height="8" rx="4" fill="#D4AF37" transform="rotate(18 154 122)"/>
+  <!-- head -->
+  <circle cx="100" cy="66" r="34" fill="url(#skin)" stroke="#245c1a" stroke-width="3"/>
+  <!-- jaw shading -->
+  <path d="M76 78 Q100 96 124 78" fill="none" stroke="#245c1a" stroke-width="2" opacity=".5"/>
+  <!-- eyes -->
+  <ellipse cx="88" cy="60" rx="6" ry="7" fill="#fff"/>
+  <ellipse cx="112" cy="60" rx="6" ry="7" fill="#fff"/>
+  <circle cx="89" cy="61" r="3" fill="#1a1a1a"/>
+  <circle cx="113" cy="61" r="3" fill="#1a1a1a"/>
+  <path d="M78 50 Q88 44 96 50" stroke="#245c1a" stroke-width="2.5" fill="none" stroke-linecap="round"/>
+  <path d="M104 50 Q112 44 122 50" stroke="#245c1a" stroke-width="2.5" fill="none" stroke-linecap="round"/>
+  <!-- huge happy grin -->
+  <path d="M80 76 Q100 96 120 76 Q112 90 100 90 Q88 90 80 76Z" fill="#7a1f14"/>
+  <path d="M84 78 Q100 88 116 78" fill="#fff" opacity=".85"/>
+  <!-- chicken leg held up to mouth -->
+  <g transform="translate(132,64) rotate(-20)">
+    <rect x="-4" y="0" width="8" height="26" rx="4" fill="#E8C79A" stroke="#5c3b17" stroke-width="2"/>
+    <ellipse cx="0" cy="-8" rx="14" ry="11" fill="#C97B3D" stroke="#5c3b17" stroke-width="2.5"/>
+    <ellipse cx="-5" cy="-12" rx="4" ry="3" fill="#e0a468" opacity=".8"/>
+  </g>
+  <!-- gold belt / emblem (original, not tied to any franchise) -->
+  <rect x="82" y="140" width="36" height="10" rx="5" fill="#D4AF37" stroke="#8a6a1a" stroke-width="1.5"/>
+  <circle cx="100" cy="145" r="6" fill="#8C1418" stroke="#D4AF37" stroke-width="1.5"/>
+</svg>`;
+
+// inject logo into every slot on the page
+document.querySelectorAll('#logoSlotSmall,#logoSlotTop,#logoSlotDash,#logoSlotSettings').forEach(el=>{
+  el.innerHTML = HERO_LOGO_SVG;
+});
+
+/* =========================================================================
+   MODULE: STORAGE HELPERS
+   ========================================================================= */
+const LS = {
+  MENU:'nkv_menu', ORDERS:'nkv_orders', CUSTOMERS:'nkv_customers',
+  SETTINGS:'nkv_settings', THEME:'nkv_theme', BILL_COUNTER:'nkv_bill_counter'
+};
+function loadJSON(key, fallback){
+  try{ const raw = localStorage.getItem(key); return raw ? JSON.parse(raw) : fallback; }
+  catch(e){ return fallback; }
+}
+function save(key, val){ localStorage.setItem(key, JSON.stringify(val)); }
+function uid(prefix){ return prefix + '_' + Date.now() + '_' + Math.random().toString(36).slice(2,7); }
+
+/* ---- default data (used only on first run) ---- */
+const DEFAULT_MENU = [
+  {id:uid('m'), nameEn:'Chicken Biryani', nameTa:'சிக்கன் பிரியாணி', category:'Biryani', price:220, available:true, img:'', desc:'Aromatic basmati rice slow-cooked with tender chicken & signature spices.', emoji:'🍛'},
+  {id:uid('m'), nameEn:'Mutton Biryani', nameTa:'ஆட்டுக்கறி பிரியாணி', category:'Biryani', price:280, available:true, img:'', desc:'Rich, slow-cooked mutton biryani layered with fragrant masala.', emoji:'🍛'},
+  {id:uid('m'), nameEn:'Nattu Kozhi Varuval', nameTa:'நாட்டு கோழி வறுவல்', category:'Chicken', price:260, available:true, img:'', desc:'Country chicken roasted dry with black pepper and country spices.', emoji:'🍗'},
+  {id:uid('m'), nameEn:'Chilli Chicken', nameTa:'சில்லி சிக்கன்', category:'Chicken', price:180, available:true, img:'', desc:'Indo-Chinese style spicy, tangy fried chicken tossed in chilli sauce.', emoji:'🍗'},
+  {id:uid('m'), nameEn:'Fish Fry', nameTa:'மீன் வறுவல்', category:'Seafood', price:200, available:true, img:'', desc:'Crispy shallow-fried fish marinated in Chettinad style spices.', emoji:'🐟'},
+  {id:uid('m'), nameEn:'Pepper Chicken', nameTa:'மிளகு கோழி', category:'Chicken', price:210, available:true, img:'', desc:'Chicken tossed in crushed black pepper masala, dry roasted.', emoji:'🍗'},
+  {id:uid('m'), nameEn:'Unlimited Meals', nameTa:'அன்லிமிடெட் மீல்ஸ்', category:'Meals', price:150, available:true, img:'', desc:'Unlimited South Indian meals with sambar, rasam & sides.', emoji:'🍚'},
+];
+const DEFAULT_SETTINGS = {
+  name:'நவி கறி விருந்து', phone:'+91 98765 43210', whatsapp:'+91 98765 43210',
+  address:'Thirukkanur Main Road, Puducherry - 605007',
+  gstNo:'33AAAAA0000A1Z5', openTime:'11:00', closeTime:'23:00',
+  taxPercent:5, currency:'₹'
+};
+
+/* ---- application state (loaded from localStorage, or defaults) ---- */
+let menu      = loadJSON(LS.MENU, DEFAULT_MENU);
+let orders    = loadJSON(LS.ORDERS, []);
+let customers = loadJSON(LS.CUSTOMERS, []);
+let settings  = Object.assign({}, DEFAULT_SETTINGS, loadJSON(LS.SETTINGS, {}));
+let billCounter = loadJSON(LS.BILL_COUNTER, 1000);
+save(LS.MENU, menu); // persist defaults on very first run
+
+let cart = {};              // { itemId: qty }
+let posCategoryFilter = 'All';
+let menuCategoryFilter = 'All';
+let paymentMode = 'Cash';
+let editingMenuId = null;
+let pendingMenuImg = '';
+
+function fmtMoney(n){ return settings.currency + Math.round(n).toLocaleString('en-IN'); }
+function todayStr(d){ const x = new Date(d); return x.toDateString(); }
+
+/* =========================================================================
+   MODULE: TOAST
+   ========================================================================= */
+function toast(msg, type){
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.style.background = type==='error' ? 'linear-gradient(135deg,#e0503f,#8c1418)' : 'linear-gradient(135deg,#D4AF37,#9C7A1E)';
+  t.style.color = type==='error' ? '#fff' : '#241205';
+  t.classList.add('show');
+  clearTimeout(toast._h);
+  toast._h = setTimeout(()=> t.classList.remove('show'), 2200);
+}
+
+/* =========================================================================
+   MODULE: NAVIGATION (section switching + mobile drawer)
+   ========================================================================= */
+const sections = document.querySelectorAll('.section');
+const navItems = document.querySelectorAll('.nav-item');
+function goToSection(name){
+  sections.forEach(s=> s.classList.toggle('active', s.id === 'section-'+name));
+  navItems.forEach(n=> n.classList.toggle('active', n.dataset.section === name));
+  closeDrawer();
+  if(name==='dashboard') renderDashboard();
+  if(name==='reports') renderReports();
+  if(name==='customers') renderCustomers();
+  if(name==='orders') renderOrders();
+}
+navItems.forEach(btn=> btn.addEventListener('click', ()=> goToSection(btn.dataset.section)));
+document.getElementById('topbarCartBtn').addEventListener('click', ()=> goToSection('pos'));
+
+const sidebar = document.getElementById('sidebar');
+const overlayBackdrop = document.getElementById('overlayBackdrop');
+function openDrawer(){ sidebar.classList.add('open'); overlayBackdrop.classList.add('show'); }
+function closeDrawer(){ sidebar.classList.remove('open'); overlayBackdrop.classList.remove('show'); }
+document.getElementById('hamburgerBtn').addEventListener('click', openDrawer);
+overlayBackdrop.addEventListener('click', closeDrawer);
+
+/* =========================================================================
+   MODULE: THEME (dark / light)
+   ========================================================================= */
+function applyTheme(mode){
+  document.documentElement.setAttribute('data-theme', mode);
+  document.getElementById('themeLabel').textContent = mode==='dark' ? '🌙 Dark Mode' : '☀️ Light Mode';
+  localStorage.setItem(LS.THEME, mode);
+}
+document.getElementById('themeToggle').addEventListener('click', ()=>{
+  const current = document.documentElement.getAttribute('data-theme');
+  applyTheme(current==='dark' ? 'light' : 'dark');
+});
+applyTheme(localStorage.getItem(LS.THEME) || 'dark');
+
+/* =========================================================================
+   MODULE: MENU RENDERING (shared by POS grid + Management grid)
+   ========================================================================= */
+const CATEGORIES = ['All','Biryani','Chicken','Mutton','Seafood','Meals','Sides','Other'];
+
+function renderCatChips(containerId, activeVal, onPick){
+  const wrap = document.getElementById(containerId);
+  wrap.innerHTML = '';
+  CATEGORIES.forEach(cat=>{
+    const chip = document.createElement('button');
+    chip.className = 'chip' + (cat===activeVal ? ' active' : '');
+    chip.textContent = cat;
+    chip.addEventListener('click', ()=> onPick(cat));
+    wrap.appendChild(chip);
+  });
+}
+
+function foodThumbInner(item){
+  return item.img
+    ? `<img src="${item.img}" alt="${item.nameEn}">`
+    : (item.emoji || '🍽️');
+}
+
+/* ---- POS grid (click to add to cart) ---- */
+function renderPosGrid(){
+  renderCatChips('posCatChips', posCategoryFilter, (cat)=>{ posCategoryFilter = cat; renderPosGrid(); });
+  const q = document.getElementById('posSearch').value.trim().toLowerCase();
+  const grid = document.getElementById('posMenuGrid');
+  grid.innerHTML = '';
+  menu
+    .filter(it=> it.available)
+    .filter(it=> posCategoryFilter==='All' || it.category===posCategoryFilter)
+    .filter(it=> !q || it.nameEn.toLowerCase().includes(q) || (it.nameTa||'').includes(q))
+    .forEach(item=>{
+      const qty = cart[item.id] || 0;
+      const card = document.createElement('div');
+      card.className = 'glass-sm food-card fade-up';
+      card.innerHTML = `
+        <div class="food-thumb">${foodThumbInner(item)}</div>
+        <div class="food-body">
+          <div class="food-name">${item.nameEn}</div>
+          <div class="food-cat">${item.category}</div>
+          <div class="food-foot">
+            <span class="food-price">${fmtMoney(item.price)}</span>
+            <div class="qty-pill">
+              <button data-act="dec" data-id="${item.id}">−</button>
+              <span>${qty}</span>
+              <button data-act="inc" data-id="${item.id}">+</button>
+            </div>
+          </div>
+        </div>`;
+      grid.appendChild(card);
+    });
+  grid.querySelectorAll('.qty-pill button').forEach(btn=>{
+    btn.addEventListener('click', ()=> changeCartQty(btn.dataset.id, btn.dataset.act==='inc'?1:-1));
+  });
+  renderCart();
+}
+
+function changeCartQty(id, delta){
+  const next = Math.max(0, (cart[id]||0)+delta);
+  if(next===0) delete cart[id]; else cart[id]=next;
+  renderPosGrid();
+}
+
+/* ---- cart summary ---- */
+function cartLineItems(){
+  return Object.entries(cart).map(([id,qty])=>{
+    const item = menu.find(m=>m.id===id);
+    return item ? {id, nameEn:item.nameEn, nameTa:item.nameTa, price:item.price, qty} : null;
+  }).filter(Boolean);
+}
+function cartSubtotal(){ return cartLineItems().reduce((s,i)=> s + i.price*i.qty, 0); }
+function computeDiscount(subtotal){
+  const val = parseFloat(document.getElementById('discountInput').value) || 0;
+  const type = document.getElementById('discountType').value;
+  return type==='percent' ? subtotal*(val/100) : Math.min(val, subtotal);
+}
+function renderCart(){
+  const wrap = document.getElementById('cartItemsWrap');
+  const items = cartLineItems();
+  wrap.innerHTML = '';
+  if(items.length===0){
+    wrap.innerHTML = '<div class="empty-cart">🛒 Your bill is empty.<br>Tap a dish to add it.</div>';
+  } else {
+    items.forEach(i=>{
+      const row = document.createElement('div');
+      row.className = 'cart-row';
+      row.innerHTML = `
+        <div class="info"><div class="name">${i.nameEn}</div><div class="price">${fmtMoney(i.price)} × ${i.qty}</div></div>
+        <div class="qty-pill">
+          <button data-act="dec" data-id="${i.id}">−</button><span>${i.qty}</span>
+          <button data-act="inc" data-id="${i.id}">+</button>
+        </div>`;
+      wrap.appendChild(row);
+    });
+    wrap.querySelectorAll('.qty-pill button').forEach(btn=>{
+      btn.addEventListener('click', ()=> changeCartQty(btn.dataset.id, btn.dataset.act==='inc'?1:-1));
+    });
+  }
+  const subtotal = cartSubtotal();
+  const discount = computeDiscount(subtotal);
+  const taxable = Math.max(0, subtotal - discount);
+  const gst = taxable * (settings.taxPercent/100);
+  const total = taxable + gst;
+
+  document.getElementById('sumSubtotal').textContent = fmtMoney(subtotal);
+  document.getElementById('sumDiscount').textContent = '-' + fmtMoney(discount);
+  document.getElementById('sumGstLabel').textContent = `GST (${settings.taxPercent}%)`;
+  document.getElementById('sumGst').textContent = fmtMoney(gst);
+  document.getElementById('sumTotal').textContent = fmtMoney(total);
+}
+document.getElementById('discountInput').addEventListener('input', renderCart);
+document.getElementById('discountType').addEventListener('change', renderCart);
+document.getElementById('posSearch').addEventListener('input', renderPosGrid);
+document.getElementById('btnClearCartPos').addEventListener('click', ()=>{
+  cart = {}; document.getElementById('discountInput').value = 0;
+  renderPosGrid(); toast('Bill cleared');
+});
+
+/* payment mode buttons */
+document.querySelectorAll('.pay-mode').forEach(btn=>{
+  btn.addEventListener('click', ()=>{
+    document.querySelectorAll('.pay-mode').forEach(b=>b.classList.remove('active'));
+    btn.classList.add('active');
+    paymentMode = btn.dataset.mode;
+  });
+});
+
+/* =========================================================================
+   MODULE: BILL GENERATION / PRINT / PDF / COMPLETE
+   ========================================================================= */
+let currentBillDraft = null;
+
+function buildReceiptHTML(bill){
+  const rows = bill.items.map(i=>
+    `<tr><td>${i.nameEn} x${i.qty}</td><td style="text-align:right">${fmtMoney(i.price*i.qty)}</td></tr>`
+  ).join('');
+  return `
+    <div class="r-head">
+      <div class="name">${settings.name}</div>
+      <small>${settings.address}</small>
+      <small>Ph: ${settings.phone} | GSTIN: ${settings.gstNo}</small>
+    </div>
+    <hr>
+    <table>
+      <tr><td>Bill No.</td><td style="text-align:right">#${bill.billNo}</td></tr>
+      <tr><td>Date</td><td style="text-align:right">${new Date(bill.timestamp).toLocaleString('en-IN')}</td></tr>
+      <tr><td>Customer</td><td style="text-align:right">${bill.customerName || 'Walk-in'}</td></tr>
+      <tr><td>Payment</td><td style="text-align:right">${bill.paymentMode}</td></tr>
+    </table>
+    <hr>
+    <table>${rows}</table>
+    <hr>
+    <table>
+      <tr><td>Subtotal</td><td style="text-align:right">${fmtMoney(bill.subtotal)}</td></tr>
+      <tr><td>Discount</td><td style="text-align:right">-${fmtMoney(bill.discount)}</td></tr>
+      <tr><td>GST (${settings.taxPercent}%)</td><td style="text-align:right">${fmtMoney(bill.gst)}</td></tr>
+      <tr class="r-total"><td>TOTAL</td><td style="text-align:right">${fmtMoney(bill.total)}</td></tr>
+    </table>
+    <div class="r-foot">🙏 Thank you! Visit again — நன்றி!</div>
+  `;
+}
+
+document.getElementById('btnGenerateBill').addEventListener('click', ()=>{
+  const items = cartLineItems();
+  if(items.length===0){ toast('Add at least one dish first', 'error'); return; }
+  const subtotal = cartSubtotal();
+  const discount = computeDiscount(subtotal);
+  const taxable = Math.max(0, subtotal - discount);
+  const gst = taxable * (settings.taxPercent/100);
+  const total = taxable + gst;
+
+  currentBillDraft = {
+    billNo: billCounter + 1,
+    timestamp: new Date().toISOString(),
+    items, subtotal, discount, gst, total,
+    paymentMode,
+    customerName: document.getElementById('custName').value.trim(),
+    customerPhone: document.getElementById('custPhone').value.trim(),
+  };
+  document.getElementById('receiptContent').innerHTML = buildReceiptHTML(currentBillDraft);
+  document.getElementById('billModal').classList.add('show');
+});
+
+document.getElementById('btnPrintBill').addEventListener('click', ()=> window.print());
+document.getElementById('btnDownloadPdf').addEventListener('click', ()=>{
+  // No external PDF library is used (per the "no external dependency" requirement).
+  // We use the browser's native print pipeline, which lets the user choose
+  // "Save as PDF" as the destination — a fully offline, dependency-free way
+  // to produce a real PDF file from vanilla JS.
+  toast('In the print dialog, choose "Save as PDF" as the destination');
+  setTimeout(()=> window.print(), 400);
+});
+
+document.getElementById('btnCompleteOrder').addEventListener('click', ()=>{
+  if(!currentBillDraft) return;
+  billCounter += 1;
+  save(LS.BILL_COUNTER, billCounter);
+  orders.push(currentBillDraft);
+  save(LS.ORDERS, orders);
+
+  // upsert customer record
+  if(currentBillDraft.customerPhone){
+    let c = customers.find(c=> c.phone === currentBillDraft.customerPhone);
+    if(!c){
+      c = {id:uid('c'), name: currentBillDraft.customerName || 'Guest', phone: currentBillDraft.customerPhone, orderCount:0, totalSpent:0};
+      customers.push(c);
+    }
+    c.name = currentBillDraft.customerName || c.name;
+    c.orderCount += 1;
+    c.totalSpent += currentBillDraft.total;
+    save(LS.CUSTOMERS, customers);
+  }
+
+  cart = {};
+  document.getElementById('custName').value = '';
+  document.getElementById('custPhone').value = '';
+  document.getElementById('discountInput').value = 0;
+  document.getElementById('billModal').classList.remove('show');
+  currentBillDraft = null;
+  renderPosGrid();
+  toast('✅ Order saved successfully!');
+});
+
+/* generic modal close handling */
+document.querySelectorAll('[data-close]').forEach(btn=>{
+  btn.addEventListener('click', ()=> document.getElementById(btn.dataset.close).classList.remove('show'));
+});
+document.querySelectorAll('.modal').forEach(modal=>{
+  modal.addEventListener('click', (e)=>{ if(e.target===modal) modal.classList.remove('show'); });
+});
+
+/* =========================================================================
+   MODULE: MENU MANAGEMENT (Add / Edit / Delete)
+   ========================================================================= */
+function renderMenuManagement(){
+  renderCatChips('menuCatChips', menuCategoryFilter, (cat)=>{ menuCategoryFilter = cat; renderMenuManagement(); });
+  const q = document.getElementById('menuSearch').value.trim().toLowerCase();
+  const grid = document.getElementById('menuMgmtGrid');
+  grid.innerHTML = '';
+  menu
+    .filter(it=> menuCategoryFilter==='All' || it.category===menuCategoryFilter)
+    .filter(it=> !q || it.nameEn.toLowerCase().includes(q) || (it.nameTa||'').includes(q))
+    .forEach(item=>{
+      const card = document.createElement('div');
+      card.className = 'glass-sm food-card fade-up';
+      card.innerHTML = `
+        <div class="food-thumb">${foodThumbInner(item)}</div>
+        <div class="food-body">
+          <div class="food-name">${item.nameEn}</div>
+          <div class="food-cat">${item.category} &middot; <span class="badge ${item.available?'on':'off'}">${item.available?'Available':'Unavailable'}</span></div>
+          <div class="food-desc">${item.desc||''}</div>
+          <div class="food-foot"><span class="food-price">${fmtMoney(item.price)}</span></div>
+          <div class="food-actions">
+            <button class="btn btn-ghost btn-sm" style="flex:1" data-edit="${item.id}">✏️ Edit</button>
+            <button class="btn btn-red btn-sm" style="flex:1" data-del="${item.id}">🗑️ Delete</button>
+          </div>
+        </div>`;
+      grid.appendChild(card);
+    });
+  grid.querySelectorAll('[data-edit]').forEach(b=> b.addEventListener('click', ()=> openMenuModal(b.dataset.edit)));
+  grid.querySelectorAll('[data-del]').forEach(b=> b.addEventListener('click', ()=> deleteMenuItem(b.dataset.del)));
+}
+document.getElementById('menuSearch').addEventListener('input', renderMenuManagement);
+
+function openMenuModal(id){
+  editingMenuId = id || null;
+  pendingMenuImg = '';
+  const item = id ? menu.find(m=>m.id===id) : null;
+  document.getElementById('menuModalTitle').textContent = item ? 'Edit Dish' : 'Add Dish';
+  document.getElementById('mItemNameEn').value = item?.nameEn || '';
+  document.getElementById('mItemNameTa').value = item?.nameTa || '';
+  document.getElementById('mItemCategory').value = item?.category || 'Biryani';
+  document.getElementById('mItemPrice').value = item?.price || '';
+  document.getElementById('mItemDesc').value = item?.desc || '';
+  document.getElementById('mItemAvailable').checked = item ? item.available : true;
+  const previewWrap = document.getElementById('mItemImgPreviewWrap');
+  previewWrap.innerHTML = item?.img ? `<img src="${item.img}" style="width:100%;height:100%;object-fit:cover;border-radius:10px;">` : (item?.emoji || '🍽️');
+  document.getElementById('menuModal').classList.add('show');
+}
+document.getElementById('btnAddMenuItem').addEventListener('click', ()=> openMenuModal(null));
+document.getElementById('mItemImgInput').addEventListener('change', (e)=>{
+  const file = e.target.files[0];
+  if(!file) return;
+  const reader = new FileReader();
+  reader.onload = ()=>{
+    pendingMenuImg = reader.result;
+    document.getElementById('mItemImgPreviewWrap').innerHTML = `<img src="${pendingMenuImg}" style="width:100%;height:100%;object-fit:cover;border-radius:10px;">`;
+  };
+  reader.readAsDataURL(file);
+});
+document.getElementById('btnSaveMenuItem').addEventListener('click', ()=>{
+  const nameEn = document.getElementById('mItemNameEn').value.trim();
+  const price = parseFloat(document.getElementById('mItemPrice').value);
+  if(!nameEn){ toast('Enter a dish name', 'error'); return; }
+  if(!price || price<=0){ toast('Enter a valid price', 'error'); return; }
+
+  const data = {
+    nameEn, nameTa: document.getElementById('mItemNameTa').value.trim(),
+    category: document.getElementById('mItemCategory').value,
+    price, desc: document.getElementById('mItemDesc').value.trim(),
+    available: document.getElementById('mItemAvailable').checked,
+  };
+  if(pendingMenuImg) data.img = pendingMenuImg;
+
+  if(editingMenuId){
+    const item = menu.find(m=>m.id===editingMenuId);
+    Object.assign(item, data);
+    toast('✅ Dish updated');
+  } else {
+    menu.push(Object.assign({id:uid('m'), img:'', emoji:'🍽️'}, data));
+    toast('✅ Dish added');
+  }
+  save(LS.MENU, menu);
+  document.getElementById('menuModal').classList.remove('show');
+  renderMenuManagement();
+  renderPosGrid();
+});
+function deleteMenuItem(id){
+  if(!confirm('Delete this dish from the menu?')) return;
+  menu = menu.filter(m=>m.id!==id);
+  save(LS.MENU, menu);
+  renderMenuManagement();
+  renderPosGrid();
+  toast('🗑️ Dish removed');
+}
+
+/* =========================================================================
+   MODULE: CUSTOMERS
+   ========================================================================= */
+function renderCustomers(){
+  const q = document.getElementById('custSearch').value.trim().toLowerCase();
+  const body = document.getElementById('customerTableBody');
+  body.innerHTML = '';
+  customers
+    .filter(c=> !q || c.name.toLowerCase().includes(q) || c.phone.includes(q))
+    .sort((a,b)=> b.totalSpent - a.totalSpent)
+    .forEach(c=>{
+      const tr = document.createElement('tr');
+      tr.innerHTML = `<td>${c.name}</td><td>${c.phone}</td><td>${c.orderCount}</td><td>${fmtMoney(c.totalSpent)}</td>`;
+      body.appendChild(tr);
+    });
+  if(customers.length===0){
+    body.innerHTML = '<tr><td colspan="4" style="text-align:center;color:var(--text-faint);padding:24px;">No customers yet — they will appear here automatically after their first order.</td></tr>';
+  }
+}
+document.getElementById('custSearch').addEventListener('input', renderCustomers);
+document.getElementById('btnAddCustomer').addEventListener('click', ()=> document.getElementById('customerModal').classList.add('show'));
+document.getElementById('btnSaveCustomer').addEventListener('click', ()=>{
+  const name = document.getElementById('cNewName').value.trim();
+  const phone = document.getElementById('cNewPhone').value.trim();
+  if(!name || !phone){ toast('Enter name and phone', 'error'); return; }
+  if(customers.some(c=>c.phone===phone)){ toast('Customer already exists', 'error'); return; }
+  customers.push({id:uid('c'), name, phone, orderCount:0, totalSpent:0});
+  save(LS.CUSTOMERS, customers);
+  document.getElementById('cNewName').value = '';
+  document.getElementById('cNewPhone').value = '';
+  document.getElementById('customerModal').classList.remove('show');
+  renderCustomers();
+  toast('✅ Customer added');
+});
+
+/* =========================================================================
+   MODULE: ORDER HISTORY
+   ========================================================================= */
+function renderOrders(){
+  const q = document.getElementById('orderSearch').value.trim().toLowerCase();
+  const body = document.getElementById('orderTableBody');
+  body.innerHTML = '';
+  const list = [...orders].reverse().filter(o=>
+    !q || String(o.billNo).includes(q) || (o.customerName||'').toLowerCase().includes(q)
+  );
+  list.forEach(o=>{
+    const tr = document.createElement('tr');
+    tr.innerHTML = `
+      <td>#${o.billNo}</td>
+      <td>${new Date(o.timestamp).toLocaleDateString('en-IN')}</td>
+      <td>${o.customerName || 'Walk-in'}</td>
+      <td>${o.items.reduce((s,i)=>s+i.qty,0)} items</td>
+      <td>${o.paymentMode}</td>
+      <td>${fmtMoney(o.total)}</td>
+      <td><button class="btn btn-ghost btn-sm" data-view="${o.billNo}">View</button></td>`;
+    body.appendChild(tr);
+  });
+  if(list.length===0){
+    body.innerHTML = '<tr><td colspan="7" style="text-align:center;color:var(--text-faint);padding:24px;">No orders yet.</td></tr>';
+  }
+  body.querySelectorAll('[data-view]').forEach(btn=>{
+    btn.addEventListener('click', ()=>{
+      const bill = orders.find(o=> String(o.billNo)===btn.dataset.view);
+      if(!bill) return;
+      document.getElementById('receiptContent').innerHTML = buildReceiptHTML(bill);
+      currentBillDraft = null; // view-only, "complete order" shouldn't re-save
+      document.getElementById('billModal').classList.add('show');
+    });
+  });
+}
+document.getElementById('orderSearch').addEventListener('input', renderOrders);
+
+/* =========================================================================
+   MODULE: DASHBOARD + REPORTS (date-range aggregation)
+   ========================================================================= */
+function ordersInRange(days){
+  const cutoff = new Date(); cutoff.setDate(cutoff.getDate() - days); cutoff.setHours(0,0,0,0);
+  return orders.filter(o=> new Date(o.timestamp) >= cutoff);
+}
+function sumTotal(list){ return list.reduce((s,o)=> s+o.total, 0); }
+function topSellingItems(list, limit){
+  const map = {};
+  list.forEach(o=> o.items.forEach(i=>{ map[i.nameEn] = (map[i.nameEn]||0) + i.qty; }));
+  return Object.entries(map).sort((a,b)=>b[1]-a[1]).slice(0, limit||5);
+}
+
+function renderBarList(container, entries){
+  container.innerHTML = '';
+  if(entries.length===0){ container.innerHTML = '<p style="color:var(--text-faint);font-size:13px;">No sales data yet.</p>'; return; }
+  const max = Math.max(...entries.map(e=>e[1]));
+  entries.forEach(([label, val])=>{
+    const row = document.createElement('div');
+    row.className = 'bar-row';
+    row.innerHTML = `<div class="bar-label">${label}</div><div class="bar-track"><div class="bar-fill" style="width:${(val/max*100)}%"></div></div><div class="bar-val">${val}</div>`;
+    container.appendChild(row);
+  });
+}
+
+function renderDashboard(){
+  document.getElementById('dashRestName').textContent = settings.name;
+  const todayOrders = orders.filter(o=> todayStr(o.timestamp) === todayStr(new Date()));
+  document.getElementById('statTodaySales').textContent = fmtMoney(sumTotal(todayOrders));
+  document.getElementById('statTodayOrders').textContent = todayOrders.length;
+  document.getElementById('statWeekSales').textContent = fmtMoney(sumTotal(ordersInRange(7)));
+  document.getElementById('statMonthSales').textContent = fmtMoney(sumTotal(ordersInRange(30)));
+
+  renderBarList(document.getElementById('dashTopItems'), topSellingItems(orders, 5));
+
+  const recentWrap = document.getElementById('dashRecentOrders');
+  recentWrap.innerHTML = '';
+  const recent = [...orders].reverse().slice(0,5);
+  if(recent.length===0){ recentWrap.innerHTML = '<p style="color:var(--text-faint);font-size:13px;">No orders yet — start billing!</p>'; }
+  recent.forEach(o=>{
+    const row = document.createElement('div');
+    row.className = 'summary-row';
+    row.style.borderBottom = '1px dashed var(--border)';
+    row.style.paddingBottom = '8px';
+    row.innerHTML = `<span>#${o.billNo} · ${o.customerName || 'Walk-in'}</span><span class="gold-text" style="font-weight:700;">${fmtMoney(o.total)}</span>`;
+    recentWrap.appendChild(row);
+  });
+}
+
+function renderReports(){
+  const todayOrders = orders.filter(o=> todayStr(o.timestamp) === todayStr(new Date()));
+  document.getElementById('repDaily').textContent = fmtMoney(sumTotal(todayOrders));
+  document.getElementById('repWeekly').textContent = fmtMoney(sumTotal(ordersInRange(7)));
+  document.getElementById('repMonthly').textContent = fmtMoney(sumTotal(ordersInRange(30)));
+  document.getElementById('repOrders').textContent = orders.length;
+
+  renderBarList(document.getElementById('repRevenueBars'), [
+    ['Today', Math.round(sumTotal(todayOrders))],
+    ['This Week', Math.round(sumTotal(ordersInRange(7)))],
+    ['This Month', Math.round(sumTotal(ordersInRange(30)))],
+    ['All Time', Math.round(sumTotal(orders))],
+  ]);
+  renderBarList(document.getElementById('repTopFood'), topSellingItems(orders, 8));
+}
+
+/* =========================================================================
+   MODULE: ADMIN SETTINGS
+   ========================================================================= */
+function loadSettingsForm(){
+  document.getElementById('setName').value = settings.name;
+  document.getElementById('setCurrency').value = settings.currency;
+  document.getElementById('setPhone').value = settings.phone;
+  document.getElementById('setWhatsapp').value = settings.whatsapp;
+  document.getElementById('setAddress').value = settings.address;
+  document.getElementById('setGstNo').value = settings.gstNo;
+  document.getElementById('setTaxPercent').value = settings.taxPercent;
+  document.getElementById('setOpenTime').value = settings.openTime;
+  document.getElementById('setCloseTime').value = settings.closeTime;
+}
+document.getElementById('btnSaveSettings').addEventListener('click', ()=>{
+  settings = {
+    name: document.getElementById('setName').value.trim() || DEFAULT_SETTINGS.name,
+    currency: document.getElementById('setCurrency').value.trim() || '₹',
+    phone: document.getElementById('setPhone').value.trim(),
+    whatsapp: document.getElementById('setWhatsapp').value.trim(),
+    address: document.getElementById('setAddress').value.trim(),
+    gstNo: document.getElementById('setGstNo').value.trim(),
+    taxPercent: parseFloat(document.getElementById('setTaxPercent').value) || 0,
+    openTime: document.getElementById('setOpenTime').value,
+    closeTime: document.getElementById('setCloseTime').value,
+  };
+  save(LS.SETTINGS, settings);
+  document.querySelectorAll('.brand-name .ta').forEach(el=> el.textContent = settings.name);
+  renderCart();
+  toast('✅ Settings saved');
+});
+
+/* =========================================================================
+   INIT
+   ========================================================================= */
+function init(){
+  loadSettingsForm();
+  renderPosGrid();
+  renderMenuManagement();
+  renderDashboard();
+  renderCustomers();
+  renderOrders();
+  renderReports();
+}
+init();
+
+})();
+</script>
+</body>
+</html>
