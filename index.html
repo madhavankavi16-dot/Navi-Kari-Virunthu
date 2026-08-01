@@ -1,0 +1,790 @@
+<!DOCTYPE html>
+<html lang="ta">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1, user-scalable=no">
+<title>நாவிகரி கடை | Navi Kari Kadai</title>
+<meta name="description" content="Navi Kari Kadai — visual billing app">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🍗</text></svg>">
+
+<script src="https://cdn.tailwindcss.com"></script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@500;700;800&family=Baloo+Thambi+2:wght@500;600;700&family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+<script>
+  tailwind.config = {
+    theme: {
+      extend: {
+        colors: {
+          chili:   '#D64550',
+          maroon:  '#8C1F1A',
+          turmeric:'#F2A93B',
+          leaf:    '#3F7D45',
+          cream:   '#FFF7E8',
+          ink:     '#2B1B12',
+        },
+        fontFamily: {
+          display: ['"Baloo 2"', 'sans-serif'],
+          tamil:   ['"Baloo Thambi 2"', 'sans-serif'],
+          body:    ['"Poppins"', 'sans-serif'],
+        },
+        boxShadow: {
+          card: '0 6px 0 rgba(43,27,18,0.18)',
+          pop:  '0 10px 24px rgba(43,27,18,0.28)',
+        }
+      }
+    }
+  }
+</script>
+
+<style>
+  html,body{ background:#FFF7E8; font-family:'Poppins',sans-serif; }
+  .font-display{ font-family:'Baloo 2', sans-serif; }
+  .font-tamil{ font-family:'Baloo Thambi 2', 'Baloo 2', sans-serif; }
+  .no-scrollbar::-webkit-scrollbar{ display:none; }
+  .no-scrollbar{ -ms-overflow-style:none; scrollbar-width:none; }
+  /* torn ticket edge for the bill drawer */
+  .ticket-edge{
+    background-image: radial-gradient(circle at 8px 0, transparent 8px, #8C1F1A 8px);
+    background-size: 20px 8px;
+    background-repeat: repeat-x;
+    background-position: top;
+  }
+  .press-active:active{ transform: translateY(3px); box-shadow:none !important; }
+  @keyframes wiggle { 0%,100%{transform:rotate(-2deg)} 50%{transform:rotate(2deg)} }
+  .wiggle{ animation: wiggle 2.4s ease-in-out infinite; }
+  @keyframes pop-in { from{ transform:scale(.85); opacity:0 } to{ transform:scale(1); opacity:1 } }
+  .pop-in{ animation: pop-in .18s ease-out; }
+  .badge-pop{ animation: pop-in .15s ease-out; }
+  input[type="number"]::-webkit-outer-spin-button,
+  input[type="number"]::-webkit-inner-spin-button{ -webkit-appearance:none; margin:0; }
+  .stripe-bg{
+    background-image: repeating-linear-gradient(45deg, #F2A93B 0 14px, #f3b95a 14px 28px);
+  }
+</style>
+</head>
+<body class="text-ink">
+
+<!-- ============================================================ -->
+<!-- HEADER / SIGNBOARD                                            -->
+<!-- ============================================================ -->
+<header class="relative overflow-hidden bg-maroon text-cream pb-6 rounded-b-[2rem] shadow-pop">
+  <div class="stripe-bg h-2 w-full opacity-90"></div>
+  <div class="flex items-center gap-3 px-4 pt-4">
+    <!-- Mascot: original hand-painted-hoarding style illustration, no real people / no copyrighted characters -->
+    <div class="shrink-0 wiggle">
+      <svg width="86" height="86" viewBox="0 0 120 120" xmlns="http://www.w3.org/2000/svg">
+        <circle cx="60" cy="60" r="58" fill="#F2A93B" stroke="#2B1B12" stroke-width="3"/>
+        <!-- face -->
+        <ellipse cx="60" cy="66" rx="34" ry="32" fill="#E8A26B" stroke="#2B1B12" stroke-width="2.5"/>
+        <!-- ears -->
+        <circle cx="27" cy="66" r="7" fill="#E8A26B" stroke="#2B1B12" stroke-width="2.5"/>
+        <circle cx="93" cy="66" r="7" fill="#E8A26B" stroke="#2B1B12" stroke-width="2.5"/>
+        <!-- hair -->
+        <path d="M28 48 Q60 14 92 48 Q90 34 60 30 Q30 34 28 48Z" fill="#2B1B12"/>
+        <!-- moustache -->
+        <path d="M38 76 Q50 68 60 76 Q70 68 82 76 Q74 86 60 80 Q46 86 38 76Z" fill="#2B1B12"/>
+        <!-- eyes (excited) -->
+        <circle cx="47" cy="58" r="4.2" fill="#2B1B12"/>
+        <circle cx="73" cy="58" r="4.2" fill="#2B1B12"/>
+        <path d="M40 50 Q47 45 54 50" stroke="#2B1B12" stroke-width="2.5" fill="none" stroke-linecap="round"/>
+        <path d="M66 50 Q73 45 80 50" stroke="#2B1B12" stroke-width="2.5" fill="none" stroke-linecap="round"/>
+        <!-- open happy mouth -->
+        <path d="M50 82 Q60 92 70 82" stroke="#2B1B12" stroke-width="3" fill="#8C1F1A" stroke-linecap="round"/>
+        <!-- chicken leg held up -->
+        <g transform="translate(85,74) rotate(-25)">
+          <rect x="-3" y="0" width="6" height="18" rx="3" fill="#E8C79A" stroke="#2B1B12" stroke-width="2"/>
+          <ellipse cx="0" cy="-6" rx="11" ry="8" fill="#C97B3D" stroke="#2B1B12" stroke-width="2.5"/>
+        </g>
+        <!-- headband -->
+        <path d="M27 46 Q60 24 93 46" stroke="#D64550" stroke-width="7" fill="none" stroke-linecap="round"/>
+        <!-- sparkle -->
+        <path d="M20 30 l3 7 l7 3 l-7 3 l-3 7 l-3 -7 l-7 -3 l7 -3 Z" fill="#FFF7E8"/>
+      </svg>
+    </div>
+    <div class="min-w-0">
+      <div class="inline-block bg-chili text-cream text-[11px] font-display font-700 px-2 py-0.5 rounded-full mb-1 tracking-wide">🔥 THIRUKKANUR FAMOUS</div>
+      <h1 class="font-tamil font-700 text-3xl leading-none drop-shadow-sm">நாவிகரி கடை</h1>
+      <p class="font-display font-700 text-turmeric text-lg leading-tight -mt-0.5">Navi Kari Kadai</p>
+    </div>
+  </div>
+
+  <!-- top-right small controls -->
+  <div class="absolute top-3 right-3 flex gap-2">
+    <button id="btnAdminToggle" title="Admin" class="w-10 h-10 rounded-full bg-cream/15 border-2 border-cream/40 flex items-center justify-center text-xl active:scale-95">🔒</button>
+  </div>
+</header>
+
+<!-- ============================================================ -->
+<!-- MAIN CONTENT AREA (screens swap here)                         -->
+<!-- ============================================================ -->
+<main class="px-3 pt-4 pb-40 max-w-3xl mx-auto">
+
+  <!-- ---------- BILL SCREEN ---------- -->
+  <section id="screen-bill">
+    <div id="menuGrid" class="grid grid-cols-2 sm:grid-cols-3 gap-3"></div>
+    <p id="emptyMenuMsg" class="hidden text-center text-ink/60 font-display font-600 mt-10">
+      🍽️ இன்னும் உணவு சேர்க்கப்படவில்லை<br><span class="text-sm">No items yet — open Admin (🔒) to add one.</span>
+    </p>
+  </section>
+
+  <!-- ---------- ADMIN SCREEN ---------- -->
+  <section id="screen-admin" class="hidden">
+
+    <div id="adminLocked" class="text-center mt-10">
+      <div class="text-6xl mb-3">🔐</div>
+      <h2 class="font-display font-700 text-xl mb-1">Admin PIN போடுங்க</h2>
+      <p class="text-ink/60 text-sm mb-4">Enter the 4-digit admin PIN</p>
+      <input id="pinInput" type="tel" inputmode="numeric" maxlength="4" placeholder="••••"
+        class="text-center text-3xl tracking-[0.5em] font-display w-44 py-3 rounded-2xl border-4 border-maroon/30 focus:border-maroon outline-none">
+      <div class="mt-4">
+        <button id="btnPinSubmit" class="bg-leaf text-white font-display font-700 text-lg px-8 py-3 rounded-2xl shadow-card press-active">✅ Enter</button>
+      </div>
+      <p class="text-xs text-ink/40 mt-6">Default PIN: 1234 (change it below once inside)</p>
+    </div>
+
+    <div id="adminPanel" class="hidden">
+      <div class="flex items-center justify-between mb-3">
+        <h2 class="font-display font-700 text-2xl">🛠️ Admin Mode</h2>
+        <button id="btnLockAgain" class="text-sm bg-maroon text-cream px-3 py-2 rounded-xl font-display font-600 press-active">🔒 Lock</button>
+      </div>
+
+      <!-- Add / Edit item form -->
+      <div class="bg-white rounded-3xl shadow-card p-4 mb-5 border-2 border-turmeric/60">
+        <h3 class="font-display font-700 text-lg mb-3" id="itemFormTitle">➕ New Dish / புதிய உணவு</h3>
+        <div class="grid grid-cols-1 gap-3">
+
+          <div class="flex gap-3 items-center">
+            <div class="relative w-24 h-24 rounded-2xl overflow-hidden border-2 border-ink/10 bg-cream shrink-0 flex items-center justify-center">
+              <img id="itemImgPreview" src="" class="hidden w-full h-full object-cover">
+              <span id="itemImgPlaceholder" class="text-3xl">📷</span>
+            </div>
+            <div class="flex flex-col gap-2 flex-1">
+              <label class="bg-turmeric text-ink font-display font-700 text-center py-2.5 rounded-xl press-active cursor-pointer">
+                📸 புகைப்படம் எடு / Take Photo
+                <input id="itemCameraInput" type="file" accept="image/*" capture="environment" class="hidden">
+              </label>
+              <label class="bg-white border-2 border-ink/15 text-ink font-display font-600 text-center py-2 rounded-xl press-active cursor-pointer text-sm">
+                🖼️ Choose from Gallery
+                <input id="itemGalleryInput" type="file" accept="image/*" class="hidden">
+              </label>
+            </div>
+          </div>
+
+          <div>
+            <label class="text-xs font-display font-600 text-ink/60">Name (English)</label>
+            <input id="itemNameEn" type="text" placeholder="Chicken Biryani"
+              class="w-full mt-1 px-3 py-2.5 rounded-xl border-2 border-ink/15 focus:border-maroon outline-none font-body">
+          </div>
+          <div>
+            <label class="text-xs font-display font-600 text-ink/60 font-tamil">பெயர் (தமிழ்)</label>
+            <input id="itemNameTa" type="text" placeholder="சிக்கன் பிரியாணி"
+              class="w-full mt-1 px-3 py-2.5 rounded-xl border-2 border-ink/15 focus:border-maroon outline-none font-tamil">
+          </div>
+          <div>
+            <label class="text-xs font-display font-600 text-ink/60">Price ₹ / விலை</label>
+            <input id="itemPrice" type="number" inputmode="decimal" placeholder="150"
+              class="w-full mt-1 px-3 py-3 rounded-xl border-2 border-ink/15 focus:border-maroon outline-none font-display font-700 text-2xl">
+          </div>
+
+          <div class="flex gap-2 mt-1">
+            <button id="btnSaveItem" class="flex-1 bg-leaf text-white font-display font-700 text-lg py-3 rounded-2xl shadow-card press-active">💾 Save / சேமி</button>
+            <button id="btnCancelEdit" class="hidden px-5 bg-white border-2 border-ink/15 font-display font-600 rounded-2xl press-active">✖️</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Existing items list -->
+      <h3 class="font-display font-700 text-lg mb-2">📋 Current Menu / மெனு</h3>
+      <div id="adminItemList" class="flex flex-col gap-2 mb-6"></div>
+
+      <!-- QR upload -->
+      <div class="bg-white rounded-3xl shadow-card p-4 mb-5 border-2 border-leaf/40">
+        <h3 class="font-display font-700 text-lg mb-3">💳 Payment QR Code</h3>
+        <div class="flex items-center gap-3">
+          <div class="w-24 h-24 rounded-2xl overflow-hidden border-2 border-ink/10 bg-cream flex items-center justify-center shrink-0">
+            <img id="qrPreviewAdmin" src="" class="hidden w-full h-full object-contain">
+            <span id="qrPreviewPlaceholder" class="text-3xl">🔲</span>
+          </div>
+          <label class="flex-1 bg-leaf text-white font-display font-700 text-center py-3 rounded-xl press-active cursor-pointer">
+            📤 Upload QR / QR பதிவேற்று
+            <input id="qrUploadInput" type="file" accept="image/*" class="hidden">
+          </label>
+        </div>
+      </div>
+
+      <!-- PIN change -->
+      <div class="bg-white rounded-3xl shadow-card p-4 mb-10 border-2 border-chili/40">
+        <h3 class="font-display font-700 text-lg mb-3">🔑 Change Admin PIN</h3>
+        <div class="flex gap-2">
+          <input id="newPinInput" type="tel" inputmode="numeric" maxlength="4" placeholder="New 4-digit PIN"
+            class="flex-1 px-3 py-2.5 rounded-xl border-2 border-ink/15 outline-none font-display text-xl tracking-widest text-center">
+          <button id="btnChangePin" class="bg-chili text-white font-display font-700 px-5 rounded-xl press-active">Update</button>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ---------- REPORTS SCREEN ---------- -->
+  <section id="screen-reports" class="hidden">
+    <h2 class="font-display font-700 text-2xl mb-3">📊 விற்பனை அறிக்கை / Sales Report</h2>
+
+    <div class="grid grid-cols-2 gap-3 mb-4">
+      <div class="bg-leaf text-white rounded-3xl shadow-card p-4">
+        <p class="font-display font-600 text-sm opacity-90">Today's Sales<br><span class="font-tamil">இன்றைய விற்பனை</span></p>
+        <p id="todayTotal" class="font-display font-800 text-3xl mt-1">₹0</p>
+      </div>
+      <div class="bg-maroon text-cream rounded-3xl shadow-card p-4">
+        <p class="font-display font-600 text-sm opacity-90">All-Time Sales<br><span class="font-tamil">மொத்த விற்பனை</span></p>
+        <p id="allTimeTotal" class="font-display font-800 text-3xl mt-1">₹0</p>
+      </div>
+    </div>
+
+    <div class="bg-white rounded-3xl shadow-card p-4 mb-4 border-2 border-turmeric/50">
+      <h3 class="font-display font-700 mb-2">🍗 Today — Qty Sold per Item</h3>
+      <div id="todayItemBreakdown" class="flex flex-col gap-2"></div>
+      <p id="noSalesToday" class="text-ink/50 text-sm hidden">No sales yet today.</p>
+    </div>
+
+    <button id="btnDownloadCsv" class="w-full bg-turmeric text-ink font-display font-700 text-lg py-4 rounded-2xl shadow-card press-active mb-3">
+      ⬇️ Download Report (.csv)
+    </button>
+
+    <div class="bg-white rounded-3xl shadow-card p-4 mb-4">
+      <div class="flex items-center justify-between mb-2">
+        <h3 class="font-display font-700">🧾 Recent Sales</h3>
+        <button id="btnClearHistory" class="text-xs text-chili font-display font-600 underline">Clear all history</button>
+      </div>
+      <div id="recentSalesList" class="flex flex-col gap-2 max-h-96 overflow-y-auto no-scrollbar"></div>
+      <p id="noHistory" class="text-ink/50 text-sm hidden">No transactions yet.</p>
+    </div>
+  </section>
+
+</main>
+
+<!-- ============================================================ -->
+<!-- FLOATING CART BAR                                             -->
+<!-- ============================================================ -->
+<div id="cartBar" class="hidden fixed left-0 right-0 bottom-16 px-3 z-30">
+  <div class="max-w-3xl mx-auto bg-ink text-cream rounded-3xl shadow-pop flex items-center justify-between px-4 py-3 pop-in">
+    <div>
+      <p class="text-[11px] opacity-70 font-display font-600 leading-none">TOTAL / மொத்தம்</p>
+      <p id="cartTotal" class="font-display font-800 text-3xl leading-tight">₹0</p>
+    </div>
+    <div class="flex gap-2">
+      <button id="btnClearCart" class="bg-chili w-14 h-14 rounded-2xl text-2xl font-display font-700 press-active" title="Clear">✖️</button>
+      <button id="btnPayNow" class="bg-leaf px-6 h-14 rounded-2xl text-lg font-display font-700 press-active">💵 Pay</button>
+    </div>
+  </div>
+</div>
+
+<!-- ============================================================ -->
+<!-- BOTTOM NAV                                                    -->
+<!-- ============================================================ -->
+<nav class="fixed bottom-0 left-0 right-0 bg-white border-t-2 border-ink/10 flex z-40">
+  <button data-tab="bill" class="tab-btn flex-1 flex flex-col items-center py-2.5 text-ink">
+    <span class="text-2xl">🍽️</span>
+    <span class="text-[11px] font-display font-700">Bill</span>
+  </button>
+  <button data-tab="reports" class="tab-btn flex-1 flex flex-col items-center py-2.5 text-ink/50">
+    <span class="text-2xl">📊</span>
+    <span class="text-[11px] font-display font-700">Reports</span>
+  </button>
+  <button data-tab="admin" class="tab-btn flex-1 flex flex-col items-center py-2.5 text-ink/50">
+    <span class="text-2xl">🛠️</span>
+    <span class="text-[11px] font-display font-700">Admin</span>
+  </button>
+</nav>
+
+<!-- ============================================================ -->
+<!-- PAYMENT MODAL                                                 -->
+<!-- ============================================================ -->
+<div id="payModal" class="hidden fixed inset-0 z-50 bg-ink/60 flex items-end sm:items-center justify-center">
+  <div class="bg-cream w-full sm:max-w-md sm:rounded-3xl rounded-t-3xl p-5 pop-in ticket-edge">
+    <div class="flex justify-between items-start mb-2">
+      <h2 class="font-display font-700 text-2xl">💳 Bill Total</h2>
+      <button id="btnClosePay" class="text-2xl leading-none">✖️</button>
+    </div>
+    <p class="text-center font-display font-800 text-5xl text-maroon my-4" id="payAmount">₹0</p>
+
+    <div id="payQrWrap" class="flex flex-col items-center mb-4">
+      <img id="payQrImg" src="" class="hidden w-56 h-56 object-contain rounded-2xl border-4 border-turmeric shadow-card">
+      <p id="noQrMsg" class="text-ink/50 text-sm text-center px-4">No QR code uploaded yet.<br>Add one from Admin → Payment QR Code.</p>
+    </div>
+
+    <button id="btnCompleteSale" class="w-full bg-leaf text-white font-display font-700 text-xl py-4 rounded-2xl shadow-card press-active mb-2">
+      ✅ Complete Sale / விற்பனை முடிந்தது
+    </button>
+    <button id="btnCancelPay" class="w-full bg-white border-2 border-ink/15 font-display font-600 py-3 rounded-2xl press-active">Cancel</button>
+  </div>
+</div>
+
+<!-- ============================================================ -->
+<!-- TOAST                                                         -->
+<!-- ============================================================ -->
+<div id="toast" class="hidden fixed top-4 left-1/2 -translate-x-1/2 bg-ink text-cream font-display font-700 px-5 py-3 rounded-2xl shadow-pop z-[60] pop-in"></div>
+
+<script>
+/* ============================================================
+   NAVI KARI KADAI — visual billing app
+   Pure vanilla JS + localStorage. No backend, no build step.
+   ============================================================ */
+
+const LS_MENU  = 'nkk_menu';
+const LS_SALES = 'nkk_sales';
+const LS_QR    = 'nkk_qr';
+const LS_PIN   = 'nkk_pin';
+
+const DEFAULT_MENU = [
+  { id: 'itm_biryani_chicken', nameEn: 'Chicken Biryani', nameTa: 'சிக்கன் பிரியாணி', price: 150,
+    img: 'https://images.unsplash.com/photo-1589302168068-964664d93dc0?w=600&q=80&auto=format&fit=crop' },
+  { id: 'itm_biryani_mutton', nameEn: 'Mutton Biryani', nameTa: 'ஆட்டுக்கறி பிரியாணி', price: 220,
+    img: 'https://images.unsplash.com/photo-1633945274309-2b1f8f6d1c5f?w=600&q=80&auto=format&fit=crop' },
+  { id: 'itm_nonveg_fry', nameEn: 'Non-Veg Fry', nameTa: 'நான்-வெஜ் ஃப்ரை', price: 120,
+    img: 'https://images.unsplash.com/photo-1562967914-608f82629710?w=600&q=80&auto=format&fit=crop' },
+  { id: 'itm_chicken_varuval', nameEn: 'Chicken Varuval', nameTa: 'சிக்கன் வறுவல்', price: 130,
+    img: 'https://images.unsplash.com/photo-1604908176997-125f25cc6f3d?w=600&q=80&auto=format&fit=crop' },
+];
+
+let menu  = loadJSON(LS_MENU, DEFAULT_MENU);
+let sales = loadJSON(LS_SALES, []);
+let qrImage = localStorage.getItem(LS_QR) || '';
+let adminPin = localStorage.getItem(LS_PIN) || '1234';
+let cart = {};          // { itemId: qty }
+let editingItemId = null;
+let unlocked = false;
+let pendingImageDataUrl = null;
+
+function loadJSON(key, fallback){
+  try{
+    const raw = localStorage.getItem(key);
+    if(!raw) return fallback;
+    return JSON.parse(raw);
+  }catch(e){ return fallback; }
+}
+function saveMenu(){ localStorage.setItem(LS_MENU, JSON.stringify(menu)); }
+function saveSales(){ localStorage.setItem(LS_SALES, JSON.stringify(sales)); }
+function fmt(n){ return '₹' + Math.round(n).toLocaleString('en-IN'); }
+function uid(){ return 'itm_' + Date.now() + '_' + Math.random().toString(36).slice(2,7); }
+
+function toast(msg){
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.remove('hidden');
+  clearTimeout(toast._h);
+  toast._h = setTimeout(()=> t.classList.add('hidden'), 1800);
+}
+
+/* ---------------- TAB NAVIGATION ---------------- */
+const screens = {
+  bill: document.getElementById('screen-bill'),
+  admin: document.getElementById('screen-admin'),
+  reports: document.getElementById('screen-reports'),
+};
+document.querySelectorAll('.tab-btn').forEach(btn=>{
+  btn.addEventListener('click', ()=> switchTab(btn.dataset.tab));
+});
+function switchTab(name){
+  Object.entries(screens).forEach(([k, el])=>{
+    el.classList.toggle('hidden', k !== name);
+  });
+  document.querySelectorAll('.tab-btn').forEach(b=>{
+    const active = b.dataset.tab === name;
+    b.classList.toggle('text-ink', active);
+    b.classList.toggle('text-ink/50', !active);
+  });
+  document.getElementById('cartBar').classList.toggle('hidden', name !== 'bill' || cartCount() === 0);
+  if(name === 'reports') renderReports();
+  if(name === 'admin') renderAdminList();
+}
+document.getElementById('btnAdminToggle').addEventListener('click', ()=> switchTab('admin'));
+
+/* ---------------- MENU RENDER (BILL SCREEN) ---------------- */
+function renderMenu(){
+  const grid = document.getElementById('menuGrid');
+  grid.innerHTML = '';
+  document.getElementById('emptyMenuMsg').classList.toggle('hidden', menu.length > 0);
+
+  menu.forEach(item=>{
+    const qty = cart[item.id] || 0;
+    const card = document.createElement('div');
+    card.className = 'relative bg-white rounded-3xl shadow-card overflow-hidden border-2 ' + (qty>0 ? 'border-leaf' : 'border-transparent');
+
+    card.innerHTML = `
+      <div class="relative w-full aspect-square bg-turmeric/30">
+        <img src="${item.img}" alt="${item.nameEn}"
+             class="w-full h-full object-cover"
+             onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
+        <div style="display:none" class="w-full h-full items-center justify-center text-5xl absolute inset-0 bg-turmeric/40">🍗</div>
+        ${qty>0 ? `<div class="badge-pop absolute top-2 right-2 bg-leaf text-white font-display font-800 text-lg w-9 h-9 rounded-full flex items-center justify-center shadow-card">${qty}</div>` : ''}
+      </div>
+      <div class="p-2.5">
+        <p class="font-tamil font-700 text-sm leading-tight truncate">${item.nameTa || ''}</p>
+        <p class="font-display font-600 text-xs text-ink/60 truncate -mt-0.5">${item.nameEn}</p>
+        <p class="font-display font-800 text-xl text-maroon mt-1">${fmt(item.price)}</p>
+        <div class="flex items-center gap-2 mt-2">
+          <button data-act="dec" data-id="${item.id}" class="qty-btn flex-1 bg-chili text-white font-display font-800 text-xl rounded-xl py-1.5 press-active">−</button>
+          <span class="w-8 text-center font-display font-700">${qty}</span>
+          <button data-act="inc" data-id="${item.id}" class="qty-btn flex-1 bg-leaf text-white font-display font-800 text-xl rounded-xl py-1.5 press-active">+</button>
+        </div>
+      </div>
+    `;
+    // tap the photo itself also adds one (image-driven, no reading required)
+    card.querySelector('img').addEventListener('click', ()=> changeQty(item.id, 1));
+    grid.appendChild(card);
+  });
+
+  grid.querySelectorAll('.qty-btn').forEach(btn=>{
+    btn.addEventListener('click', (e)=>{
+      e.stopPropagation();
+      changeQty(btn.dataset.id, btn.dataset.act === 'inc' ? 1 : -1);
+    });
+  });
+}
+
+function changeQty(id, delta){
+  const current = cart[id] || 0;
+  const next = Math.max(0, current + delta);
+  if(next === 0) delete cart[id]; else cart[id] = next;
+  renderMenu();
+  renderCartBar();
+}
+
+function cartCount(){
+  return Object.values(cart).reduce((a,b)=>a+b, 0);
+}
+function cartTotal(){
+  return Object.entries(cart).reduce((sum,[id,qty])=>{
+    const item = menu.find(m=>m.id===id);
+    return sum + (item ? item.price*qty : 0);
+  }, 0);
+}
+function renderCartBar(){
+  const bar = document.getElementById('cartBar');
+  const count = cartCount();
+  bar.classList.toggle('hidden', count === 0 || screens.bill.classList.contains('hidden'));
+  document.getElementById('cartTotal').textContent = fmt(cartTotal());
+}
+document.getElementById('btnClearCart').addEventListener('click', ()=>{
+  cart = {};
+  renderMenu();
+  renderCartBar();
+  toast('🧹 Cart cleared');
+});
+
+/* ---------------- PAYMENT MODAL ---------------- */
+const payModal = document.getElementById('payModal');
+document.getElementById('btnPayNow').addEventListener('click', openPayModal);
+function openPayModal(){
+  if(cartCount() === 0) return;
+  document.getElementById('payAmount').textContent = fmt(cartTotal());
+  const img = document.getElementById('payQrImg');
+  const msg = document.getElementById('noQrMsg');
+  if(qrImage){ img.src = qrImage; img.classList.remove('hidden'); msg.classList.add('hidden'); }
+  else { img.classList.add('hidden'); msg.classList.remove('hidden'); }
+  payModal.classList.remove('hidden');
+}
+function closePayModal(){ payModal.classList.add('hidden'); }
+document.getElementById('btnClosePay').addEventListener('click', closePayModal);
+document.getElementById('btnCancelPay').addEventListener('click', closePayModal);
+
+document.getElementById('btnCompleteSale').addEventListener('click', ()=>{
+  const items = Object.entries(cart).map(([id,qty])=>{
+    const item = menu.find(m=>m.id===id);
+    return { id, nameEn: item?.nameEn || 'Unknown', nameTa: item?.nameTa || '', price: item?.price || 0, qty };
+  });
+  const total = cartTotal();
+  sales.push({
+    id: 'sale_' + Date.now(),
+    timestamp: new Date().toISOString(),
+    items,
+    total,
+  });
+  saveSales();
+  cart = {};
+  renderMenu();
+  renderCartBar();
+  closePayModal();
+  toast('✅ Sale saved! Total ' + fmt(total));
+});
+
+/* ---------------- ADMIN: PIN LOCK ---------------- */
+const adminLocked = document.getElementById('adminLocked');
+const adminPanel  = document.getElementById('adminPanel');
+document.getElementById('btnPinSubmit').addEventListener('click', tryUnlock);
+document.getElementById('pinInput').addEventListener('keydown', e=>{ if(e.key==='Enter') tryUnlock(); });
+function tryUnlock(){
+  const val = document.getElementById('pinInput').value.trim();
+  if(val === adminPin){
+    unlocked = true;
+    adminLocked.classList.add('hidden');
+    adminPanel.classList.remove('hidden');
+    document.getElementById('pinInput').value = '';
+    renderAdminList();
+  } else {
+    toast('❌ Wrong PIN');
+  }
+}
+document.getElementById('btnLockAgain').addEventListener('click', ()=>{
+  unlocked = false;
+  adminPanel.classList.add('hidden');
+  adminLocked.classList.remove('hidden');
+  resetItemForm();
+});
+
+document.getElementById('btnChangePin').addEventListener('click', ()=>{
+  const val = document.getElementById('newPinInput').value.trim();
+  if(/^\d{4}$/.test(val)){
+    adminPin = val;
+    localStorage.setItem(LS_PIN, adminPin);
+    document.getElementById('newPinInput').value = '';
+    toast('🔑 PIN updated');
+  } else {
+    toast('PIN must be 4 digits');
+  }
+});
+
+/* ---------------- ADMIN: ITEM FORM (add / edit) ---------------- */
+function resetItemForm(){
+  editingItemId = null;
+  pendingImageDataUrl = null;
+  document.getElementById('itemFormTitle').textContent = '➕ New Dish / புதிய உணவு';
+  document.getElementById('itemNameEn').value = '';
+  document.getElementById('itemNameTa').value = '';
+  document.getElementById('itemPrice').value = '';
+  document.getElementById('itemImgPreview').classList.add('hidden');
+  document.getElementById('itemImgPreview').src = '';
+  document.getElementById('itemImgPlaceholder').classList.remove('hidden');
+  document.getElementById('btnCancelEdit').classList.add('hidden');
+}
+
+function fileToDataUrl(file, cb){
+  const reader = new FileReader();
+  reader.onload = ()=> cb(reader.result);
+  reader.readAsDataURL(file);
+}
+
+['itemCameraInput','itemGalleryInput'].forEach(id=>{
+  document.getElementById(id).addEventListener('change', (e)=>{
+    const file = e.target.files[0];
+    if(!file) return;
+    fileToDataUrl(file, (dataUrl)=>{
+      pendingImageDataUrl = dataUrl;
+      const prev = document.getElementById('itemImgPreview');
+      prev.src = dataUrl;
+      prev.classList.remove('hidden');
+      document.getElementById('itemImgPlaceholder').classList.add('hidden');
+    });
+  });
+});
+
+document.getElementById('btnSaveItem').addEventListener('click', ()=>{
+  const nameEn = document.getElementById('itemNameEn').value.trim();
+  const nameTa = document.getElementById('itemNameTa').value.trim();
+  const price  = parseFloat(document.getElementById('itemPrice').value);
+
+  if(!nameEn && !nameTa){ toast('Enter a dish name'); return; }
+  if(!price || price <= 0){ toast('Enter a valid price'); return; }
+
+  if(editingItemId){
+    const item = menu.find(m=>m.id===editingItemId);
+    item.nameEn = nameEn || item.nameEn;
+    item.nameTa = nameTa || item.nameTa;
+    item.price  = price;
+    if(pendingImageDataUrl) item.img = pendingImageDataUrl;
+    toast('✅ Item updated');
+  } else {
+    menu.push({
+      id: uid(),
+      nameEn: nameEn || 'Item',
+      nameTa: nameTa || '',
+      price,
+      img: pendingImageDataUrl || 'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=600&q=80&auto=format&fit=crop',
+    });
+    toast('✅ Item added');
+  }
+  saveMenu();
+  resetItemForm();
+  renderMenu();
+  renderAdminList();
+});
+
+document.getElementById('btnCancelEdit').addEventListener('click', resetItemForm);
+
+function renderAdminList(){
+  const wrap = document.getElementById('adminItemList');
+  wrap.innerHTML = '';
+  menu.forEach(item=>{
+    const row = document.createElement('div');
+    row.className = 'flex items-center gap-3 bg-white rounded-2xl shadow-card p-2 border-2 border-ink/5';
+    row.innerHTML = `
+      <img src="${item.img}" class="w-14 h-14 rounded-xl object-cover shrink-0" onerror="this.src='https://placehold.co/100x100/F2A93B/2B1B12?text=🍗'">
+      <div class="flex-1 min-w-0">
+        <p class="font-tamil font-700 text-sm truncate">${item.nameTa}</p>
+        <p class="font-display font-600 text-xs text-ink/60 truncate">${item.nameEn} · <span class="text-maroon font-700">${fmt(item.price)}</span></p>
+      </div>
+      <button data-id="${item.id}" class="editBtn w-10 h-10 bg-turmeric rounded-xl text-lg press-active shrink-0">✏️</button>
+      <button data-id="${item.id}" class="delBtn w-10 h-10 bg-chili text-white rounded-xl text-lg press-active shrink-0">🗑️</button>
+    `;
+    wrap.appendChild(row);
+  });
+
+  wrap.querySelectorAll('.editBtn').forEach(b=> b.addEventListener('click', ()=> startEdit(b.dataset.id)));
+  wrap.querySelectorAll('.delBtn').forEach(b=> b.addEventListener('click', ()=> deleteItem(b.dataset.id)));
+}
+
+function startEdit(id){
+  const item = menu.find(m=>m.id===id);
+  if(!item) return;
+  editingItemId = id;
+  pendingImageDataUrl = null;
+  document.getElementById('itemFormTitle').textContent = '✏️ Edit Dish / திருத்து';
+  document.getElementById('itemNameEn').value = item.nameEn;
+  document.getElementById('itemNameTa').value = item.nameTa;
+  document.getElementById('itemPrice').value = item.price;
+  const prev = document.getElementById('itemImgPreview');
+  prev.src = item.img; prev.classList.remove('hidden');
+  document.getElementById('itemImgPlaceholder').classList.add('hidden');
+  document.getElementById('btnCancelEdit').classList.remove('hidden');
+  window.scrollTo({top:0, behavior:'smooth'});
+}
+
+function deleteItem(id){
+  if(!confirm('Delete this item?')) return;
+  menu = menu.filter(m=>m.id!==id);
+  delete cart[id];
+  saveMenu();
+  renderMenu();
+  renderAdminList();
+  renderCartBar();
+  toast('🗑️ Item removed');
+}
+
+/* ---------------- ADMIN: QR UPLOAD ---------------- */
+function refreshQrPreview(){
+  const img = document.getElementById('qrPreviewAdmin');
+  const ph  = document.getElementById('qrPreviewPlaceholder');
+  if(qrImage){ img.src = qrImage; img.classList.remove('hidden'); ph.classList.add('hidden'); }
+  else { img.classList.add('hidden'); ph.classList.remove('hidden'); }
+}
+document.getElementById('qrUploadInput').addEventListener('change', (e)=>{
+  const file = e.target.files[0];
+  if(!file) return;
+  fileToDataUrl(file, (dataUrl)=>{
+    qrImage = dataUrl;
+    localStorage.setItem(LS_QR, qrImage);
+    refreshQrPreview();
+    toast('✅ QR code saved');
+  });
+});
+
+/* ---------------- REPORTS ---------------- */
+function isToday(iso){
+  const d = new Date(iso);
+  const now = new Date();
+  return d.getFullYear()===now.getFullYear() && d.getMonth()===now.getMonth() && d.getDate()===now.getDate();
+}
+
+function renderReports(){
+  const todaySales = sales.filter(s=> isToday(s.timestamp));
+  const todayTotal = todaySales.reduce((a,s)=>a+s.total,0);
+  const allTimeTotal = sales.reduce((a,s)=>a+s.total,0);
+
+  document.getElementById('todayTotal').textContent = fmt(todayTotal);
+  document.getElementById('allTimeTotal').textContent = fmt(allTimeTotal);
+
+  // per-item qty today
+  const qtyMap = {};
+  todaySales.forEach(s=> s.items.forEach(it=>{
+    const key = it.nameEn + '|' + it.nameTa;
+    qtyMap[key] = (qtyMap[key]||0) + it.qty;
+  }));
+  const breakdown = document.getElementById('todayItemBreakdown');
+  breakdown.innerHTML = '';
+  const entries = Object.entries(qtyMap).sort((a,b)=>b[1]-a[1]);
+  document.getElementById('noSalesToday').classList.toggle('hidden', entries.length>0);
+  entries.forEach(([key, qty])=>{
+    const [en, ta] = key.split('|');
+    const row = document.createElement('div');
+    row.className = 'flex items-center justify-between bg-cream rounded-xl px-3 py-2';
+    row.innerHTML = `
+      <div>
+        <p class="font-tamil font-700 text-sm">${ta||en}</p>
+        <p class="font-display text-xs text-ink/50">${en}</p>
+      </div>
+      <div class="bg-leaf text-white font-display font-800 text-lg w-12 h-10 rounded-xl flex items-center justify-center">${qty}</div>
+    `;
+    breakdown.appendChild(row);
+  });
+
+  // recent sales list
+  const list = document.getElementById('recentSalesList');
+  list.innerHTML = '';
+  const recent = [...sales].reverse().slice(0, 50);
+  document.getElementById('noHistory').classList.toggle('hidden', recent.length>0);
+  recent.forEach(s=>{
+    const d = new Date(s.timestamp);
+    const timeStr = d.toLocaleString('en-IN', {day:'2-digit', month:'short', hour:'2-digit', minute:'2-digit'});
+    const itemsStr = s.items.map(i=> `${i.nameEn} x${i.qty}`).join(', ');
+    const row = document.createElement('div');
+    row.className = 'border-b border-ink/10 pb-2';
+    row.innerHTML = `
+      <div class="flex justify-between items-center">
+        <span class="font-display font-700">${fmt(s.total)}</span>
+        <span class="text-xs text-ink/50">${timeStr}</span>
+      </div>
+      <p class="text-xs text-ink/60 truncate">${itemsStr}</p>
+    `;
+    list.appendChild(row);
+  });
+}
+
+document.getElementById('btnClearHistory').addEventListener('click', ()=>{
+  if(!confirm('Delete ALL sales history? This cannot be undone.')) return;
+  sales = [];
+  saveSales();
+  renderReports();
+  toast('🧹 History cleared');
+});
+
+document.getElementById('btnDownloadCsv').addEventListener('click', ()=>{
+  if(sales.length===0){ toast('No sales to export yet'); return; }
+  const rows = [['Sale ID','Date-Time','Item (EN)','Item (TA)','Qty','Unit Price','Line Total','Bill Total']];
+  sales.forEach(s=>{
+    s.items.forEach(it=>{
+      rows.push([
+        s.id,
+        new Date(s.timestamp).toLocaleString('en-IN'),
+        it.nameEn, it.nameTa, it.qty, it.price, it.qty*it.price, s.total
+      ]);
+    });
+  });
+  const csv = rows.map(r=> r.map(cell=>{
+    const str = String(cell ?? '');
+    return /[",\n]/.test(str) ? '"' + str.replace(/"/g,'""') + '"' : str;
+  }).join(',')).join('\n');
+
+  const blob = new Blob(["\uFEFF" + csv], {type:'text/csv;charset=utf-8;'});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `navi-kari-kadai-sales-${new Date().toISOString().slice(0,10)}.csv`;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+  toast('⬇️ Report downloaded');
+});
+
+/* ---------------- INIT ---------------- */
+function init(){
+  saveMenu();     // persist defaults on first run
+  renderMenu();
+  renderCartBar();
+  refreshQrPreview();
+  switchTab('bill');
+}
+init();
+</script>
+</body>
+</html>
